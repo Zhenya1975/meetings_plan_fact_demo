@@ -1,5 +1,6 @@
 from dash import dcc, html
 import dash_bootstrap_components as dbc
+import initial_values
 
 def tab_plan_fact():
     tab_plan_fact = dcc.Tab(
@@ -21,6 +22,7 @@ def tab_plan_fact():
                                                                dbc.Row([
                                                                    html.Div(style={'paddingLeft': '5px','paddingRight': '5px',},
                                                                             children=[
+                                                                                html.Div(id='test', children=[html.P()]),
                                                                                 dcc.Dropdown(
                                                                                     id='quarter_selector',
                                                                                     options=[
@@ -34,7 +36,7 @@ def tab_plan_fact():
                                                                                          'value': 4},
                                                                                     ],
                                                                                     placeholder='Квартал',
-                                                                                    # value='NYC'
+                                                                                    value=initial_values.get_curent_quarter_and_year()[0]
                                                                                 ),
                                                                             ]),
                                                                    html.Div(style={'paddingLeft': '5px',
@@ -44,17 +46,17 @@ def tab_plan_fact():
                                                                                 dcc.Dropdown(
                                                                                     id='year_selector',
                                                                                     options=[
-                                                                                        {'label': '1-й кв',
-                                                                                         'value': 1},
-                                                                                        {'label': '2-й кв',
-                                                                                         'value': 2},
-                                                                                        {'label': '3-й кв',
-                                                                                         'value': 3},
-                                                                                        {'label': '4-й кв',
-                                                                                         'value': 4},
+                                                                                        {'label': '2019',
+                                                                                         'value': 2019},
+                                                                                        {'label': '2020',
+                                                                                         'value': 2020},
+                                                                                        {'label': '2021',
+                                                                                         'value': 2021},
+                                                                                        {'label': '2022',
+                                                                                         'value': 2022},
                                                                                     ],
-                                                                                    placeholder='Квартал',
-                                                                                    # value='NYC'
+                                                                                    placeholder='Год',
+                                                                                    value=initial_values.get_curent_quarter_and_year()[1]
                                                                                 ),
                                                                             ]),
                                                                ]

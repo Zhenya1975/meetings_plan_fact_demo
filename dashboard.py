@@ -76,7 +76,18 @@ app.layout = dbc.Container(
     fluid=True,
 )
 
+@app.callback([
+    Output('test', 'children'),
+   ],
 
+    [
+        Input('quarter_selector', 'value'),
+        Input('year_selector', 'value'),
+
+   ])
+def cut_selection_by_quarter(quarter_selector, year_selector):
+    selected_df
+    return ['test']
 
 
 

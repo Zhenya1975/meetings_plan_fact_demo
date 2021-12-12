@@ -1,5 +1,7 @@
-from datetime import date
+from datetime import date, timedelta
 from calendar import monthrange
+
+import pandas as pd
 
 
 def quarter_important_days(quarter_number, year):
@@ -18,4 +20,10 @@ def cut_df_by_dates_interval(df, date_field_name, start_date, end_date):
     before_end_date = df.loc[:, date_field_name] <= end_date
     between_two_dates = after_start_date & before_end_date
     result_df = df.loc[between_two_dates]
+    return result_df
+
+def quarter_all_dates_prepare(first_day_of_selection, last_day_of_selection):
+    """список всех дней квартала с полем qty = 0. Заготовка для построения графика факта"""
+    result_df = pd.DataFrame([first_day_of_selection+timedelta(days=x) for x in range((last_day_of_selection-first_day_of_selection).days)], columns=['close_date'])
+    result_df['zero_qty'] = 0
     return result_df

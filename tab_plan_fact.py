@@ -63,17 +63,20 @@ def tab_plan_fact():
                                                                ),
 
                                                                html.P(),
-                                                               dbc.Button("Выбрать все", size="sm",
-                                                                          id="select_all_regions_button_tab_plan_fact",
-                                                                          style={'marginBottom': '3px',
-                                                                                 'marginTop': '3px',
-                                                                                 'backgroundColor': '#232632'}),
-                                                               dbc.Button("Снять выбор", color="secondary",
-                                                                          size="sm",
-                                                                          style={'marginBottom': '3px',
-                                                                                 'marginTop': '3px',
-                                                                                 'backgroundColor': '#232632'},
-                                                                          id="release_all_regions_button_tab_plan_fact"),
+
+                                                          dbc.Button("Выбрать все", size="sm",
+                                                                     id="select_all_regions_button_tab_plan_fact",
+                                                                     style={'marginBottom': '3px',
+                                                                            'marginTop': '3px',
+                                                                            'backgroundColor': '#232632'}
+                                                                     ),
+                                                          dbc.Button("Снять выбор", color="secondary",
+                                                                     size="sm",
+                                                                     style={'marginBottom': '3px',
+                                                                            'marginTop': '3px',
+                                                                            'backgroundColor': '#232632'},
+                                                                     id="release_all_regions_button_tab_plan_fact"),
+
                                                                html.P(),
                                                                dcc.Checklist(
                                                                    id='region_selector_checklist_tab_plan_fact',
@@ -93,7 +96,8 @@ def tab_plan_fact():
                                                                      id="select_all_managers_button_tab_plan_fact",
                                                                      style={'marginBottom': '3px',
                                                                             'marginTop': '3px',
-                                                                            'backgroundColor': '#232632'}),
+                                                                            'backgroundColor': '#232632'}
+                                                                     ),
                                                           dbc.Button("Снять выбор", color="secondary",
                                                                      size="sm",
                                                                      style={'marginBottom': '3px',
@@ -118,7 +122,8 @@ def tab_plan_fact():
                     ),
             dbc.Col(width=9,
                     children=[
-                        dcc.Graph(id='meetings_plan_fact_graph', config={'displayModeBar': False}),
+                        html.Div(dcc.Graph(id="meetings_plan_fact_graph"), className="m-4")
+                        #dcc.Graph(id='meetings_plan_fact_graph', config={'displayModeBar': False}),
                     ]),
         ]
 

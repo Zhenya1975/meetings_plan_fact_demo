@@ -2,13 +2,18 @@ import datetime
 import pandas as pd
 import json
 
-# mode = 'actual'
-mode = 'demo'
+mode = 'actual'
+# mode = 'demo'
 
 if mode == 'demo':
     events_df = pd.read_csv('Data/demo_events.csv')
     customer_df = pd.read_csv('Data/demo_customers.csv')
     users_df = pd.read_csv('Data/demo_users.csv')
+    segments_visit_plan = pd.read_csv('Data/segments_visits_plans_demo.csv')
+else:
+    events_df = pd.read_csv('Data/events.csv')
+    customer_df = pd.read_csv('Data/customers.csv')
+    users_df = pd.read_csv('Data/users.csv')
     segments_visit_plan = pd.read_csv('Data/segments_visits_plans_demo.csv')
 
 def get_curent_quarter_and_year():
@@ -26,17 +31,16 @@ def get_curent_quarter_and_year():
 #  собираем данные о менеджерах и регионах из events
 def prepare_users_list():
     events_df = pd.read_csv('Data/events.csv')
-    list_of_users = events_df.loc[:, ['user_code']]
+    list_of_users = events_df.loc[:, ['user_id']]
     # list_of_unique_users - список уникальных пользователей в таблице встреч
-    list_of_unique_users = pd.DataFrame(list_of_users['user_code'].unique(), columns=['user_code'])
-
+    list_of_unique_users = pd.DataFrame(list_of_users['user_id'].unique(), columns=['user_id'])
     result_df_list = []
     # итерируемся по списку уникальных пользователей
-    for index, row_user_code in list_of_unique_users.iterrows():
+    for index, row_user_id in list_of_unique_users.iterrows():
         dict_temp = {}
-        user_code = row_user_code['user_code']
+        user_id = row_user_id['user_id']
         # temp_df - выборка из таблицы встреч по текущенму юзеру в цикле
-        temp_df = events_df.loc[events_df['user_code']==user_code]
+        temp_df = events_df.loc[events_df['user_id']==user_id]
         user_region_list = []
         # итерируемся по полученной выборке и собираем все регионы, которые нам попадутся
         for index, row_events_selection in temp_df.iterrows():
@@ -47,10 +51,10 @@ def prepare_users_list():
 
         # Проверяем. Если список регионов у юзера пустой, то даем ему регион с кодом ноль
         if len(user_region_list) == 0:
-            dict_temp['user_code'] = user_code
-            dict_temp['regions_list'] = 0
+            dict_temp['user_id'] = user_id
+            dict_temp['regions_list'] = [0]
         else:
-            dict_temp['user_code'] = user_code
+            dict_temp['user_id'] = user_id
             dict_temp['regions_list'] = user_region_list
         # добавляем пользователя в список
         result_df_list.append(dict_temp)

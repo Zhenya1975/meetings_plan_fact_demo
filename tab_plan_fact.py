@@ -36,6 +36,7 @@ def tab_plan_fact():
                                                                                          'value': 4},
                                                                                     ],
                                                                                     placeholder='Квартал',
+                                                                                    clearable=False,
                                                                                     value=initial_values.get_curent_quarter_and_year()[0]
                                                                                 ),
                                                                             ]),
@@ -56,6 +57,7 @@ def tab_plan_fact():
                                                                                          'value': 2022},
                                                                                     ],
                                                                                     placeholder='Год',
+                                                                                    clearable = False,
                                                                                     value=initial_values.get_curent_quarter_and_year()[1]
                                                                                 ),
                                                                             ]),

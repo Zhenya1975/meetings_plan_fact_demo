@@ -28,6 +28,25 @@ def get_curent_quarter_and_year():
     """Номер текущего года"""
     return current_quarter, current_year
 
+# проитерируемся по events.df и запишем в список компаний данные о выполнении плана
+# одновременно в списке events.df будем отслеживать выполнена ли норма. И этот статус будем записывать в events.df
+# сначала удаляем пустые строки встреч без связи с клиентом
+events_df.dropna(subset=['region_name', 'customer_id'], inplace=True)
+values = {"deal_id": 0}
+events_df = events_df.copy()
+events_df.fillna(value=values, inplace=True)
+events_df = events_df.astype({"deal_id": int, 'customer_id': int})
+# добавляем колонки "visit_fact" c нулями. И "plan_fact_status" c нулями
+events_df['visits_fact'] = 0
+events_df['plan_fact_status'] = 0
+
+# уделяем строки без даты завершения. Это будет датафрейм closed_events
+closed_events_df = events_df.dropna(subset=['close_date'])
+# в таблицу customers добавляем колонку "visits_fact" и заполняем ее нулями
+customer_df['visits_fact'] = 0
+
+
+
 #  собираем данные о менеджерах и регионах из events
 def prepare_users_list():
     events_df = pd.read_csv('Data/events.csv')

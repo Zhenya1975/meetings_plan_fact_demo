@@ -3,17 +3,10 @@ import initial_values
 import pandas as pd
 import datetime
 
-import meetings_plan_fact_graph_data_prepare
-
 
 def prepare_meetings_fact_data(quarter_selector_value, year_selector_value, selected_regions):
-    # получаем таблицу events / demo_events
-    if initial_values.mode == 'demo':
-        events_df = pd.read_csv('Data/demo_events.csv')
-    else:
-        events_df = pd.read_csv('Data/events.csv')
 
-
+    events_df = initial_values.events_df
     # нам нужны строки со статусом "Завершен" и с периодом текущего квартала.
     # сначала удаляем строки, в которых поле close_date не заполнено
     closed_events = events_df.dropna(subset=['close_date'])
@@ -102,8 +95,15 @@ def prepare_meetings_fact_data(quarter_selector_value, year_selector_value, sele
         region_checklist_data.append(dict_temp)
         region_list.append(row['region_code'])
 
+    # вытаскиваем данные о плане.
+    customer_df = initial_values.customer_df
+    users_df = initial_values.users_df
+    segments_visit_plan = initial_values.segments_visit_plan
 
-    return events_df_selected_by_quarter_ready, region_checklist_data, region_list, quarter_all_dates_df, first_day_of_selection, last_day_of_selection
+    customer_visit_plan_df = pd.merge(customer_df, segments_visit_plan, on='segment_letter', how='left')
+
+
+    return events_df_selected_by_quarter_ready, region_checklist_data, region_list, quarter_all_dates_df, first_day_of_selection, last_day_of_selection, customer_visit_plan_df
 
 
 

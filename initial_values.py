@@ -1,7 +1,15 @@
 import datetime
+import pandas as pd
+import json
 
 # mode = 'actual'
 mode = 'demo'
+
+if mode == 'demo':
+    events_df = pd.read_csv('Data/demo_events.csv')
+    customer_df = pd.read_csv('Data/demo_customers.csv')
+    users_df = pd.read_csv('Data/demo_users.csv')
+    segments_visit_plan = pd.read_csv('Data/segments_visits_plans_demo.csv')
 
 def get_curent_quarter_and_year():
     """получение текущего квартала и года"""
@@ -14,3 +22,51 @@ def get_curent_quarter_and_year():
     current_year = current_date.year
     """Номер текущего года"""
     return current_quarter, current_year
+
+#  собираем данные о менеджерах и регионах из events
+def prepare_users_list():
+    events_df = pd.read_csv('Data/events.csv')
+    list_of_users = events_df.loc[:, ['user_code']]
+    # list_of_unique_users - список уникальных пользователей в таблице встреч
+    list_of_unique_users = pd.DataFrame(list_of_users['user_code'].unique(), columns=['user_code'])
+
+    result_df_list = []
+    # итерируемся по списку уникальных пользователей
+    for index, row_user_code in list_of_unique_users.iterrows():
+        dict_temp = {}
+        user_code = row_user_code['user_code']
+        # temp_df - выборка из таблицы встреч по текущенму юзеру в цикле
+        temp_df = events_df.loc[events_df['user_code']==user_code]
+        user_region_list = []
+        # итерируемся по полученной выборке и собираем все регионы, которые нам попадутся
+        for index, row_events_selection in temp_df.iterrows():
+            region_code = row_events_selection['region_code']
+            #if region_code !=0 and region_code not in user_region_list:
+            if region_code not in user_region_list:
+                user_region_list.append(region_code)
+
+        # Проверяем. Если список регионов у юзера пустой, то даем ему регион с кодом ноль
+        if len(user_region_list) == 0:
+            dict_temp['user_code'] = user_code
+            dict_temp['regions_list'] = 0
+        else:
+            dict_temp['user_code'] = user_code
+            dict_temp['regions_list'] = user_region_list
+        # добавляем пользователя в список
+        result_df_list.append(dict_temp)
+    user_region_df = pd.DataFrame(result_df_list)
+    user_region_df.to_csv('Data/user_regions.csv')
+
+    return list_of_unique_users
+
+prepare_users_list()
+
+def get_users_regions_df():
+    if mode == 'actual':
+        users_regions_df= pd.read_csv('Data/user_regions.csv')
+    else:
+        users_regions_df = pd.read_csv('Data/user_regions_demo.csv')
+    # из СSV список делаем списком
+    users_regions_df['regions_list'] = users_regions_df['regions_list'].apply(lambda x: json.loads(x))
+
+    return users_regions_df

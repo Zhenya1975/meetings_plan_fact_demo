@@ -17,6 +17,7 @@ import pandas as pd
 import dash_bootstrap_components as dbc
 from dash_bootstrap_templates import ThemeSwitchAIO
 from dash_bootstrap_templates import load_figure_template
+from dash import dash_table
 
 import meeting_plan_fact
 import tab_plan_fact
@@ -94,6 +95,7 @@ app.layout = dbc.Container(
     Output("managers_selector_checklist_tab_plan_fact", "value"),
     Output("managers_selector_checklist_tab_plan_fact", "options"),
     Output('meetings_plan_fact_graph', 'figure'),
+    Output('users_plan_fact_table', 'children'),
    ],
 
     [
@@ -215,9 +217,17 @@ def cut_selection_by_quarter(quarter_selector, year_selector, select_all_regions
         title='Завершено: {}<br><sup>c {} по {}</sup> '.format(fact_at_current_date, start_date, finish_date),
     )
 
+    ############# Таблица с данными о выполнении плана сотрудниками ################
+    # Имя пользователя. План. Факт. Статус выполнения плана
+    user_plan_fact_data = meeting_plan_fact.prepare_meetings_fact_data(quarter_selector, year_selector, region_selector_selected_list, meetings_data_selector)[7]
+    # plan_fact_table = dbc.Table().from_dataframe(user_plan_fact_data)
+    users_plan_fact_table = dash_table.DataTable(
+                            # id='table',
+                            columns=[{"name": i, "id": i} for i in user_plan_fact_data.columns],
+                            data=user_plan_fact_data.to_dict('records'),
+                        )
 
-
-    return region_list_value, region_list_options, users_list_values, users_list_options, fig
+    return region_list_value, region_list_options, users_list_values, users_list_options, fig, users_plan_fact_table
 
 
 if __name__ == "__main__":

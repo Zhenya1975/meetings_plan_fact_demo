@@ -142,11 +142,30 @@ def prepare_meetings_fact_data(quarter_selector_value, year_selector_value, sele
         # удаляем строки в которых предыдущий факт больше или равен плана. То есть уже норма выполнена
         events_plan_fact_df = events_plan_fact_df.loc[events_plan_fact_df['visit_plan'] > events_plan_fact_df['prev_fact']]
 
+    ############# Таблица с данными о выполнении плана сотрудниками ################
+    # Имя пользователя. План. Факт. Статус выполнения плана
+    events_plan_fact_df.to_csv('Data/events_plan_fact_df_delete.csv')
+    users_plan_fact_data = events_plan_fact_df.groupby(['user_id'])[['visit_plan', 'fact']].sum()
+
+    users_plan_fact_data['delta'] = users_plan_fact_data['visit_plan'] - users_plan_fact_data['fact']
+    users_plan_fact_data['status'] = 0
+    for index, row in users_plan_fact_data.iterrows():
+        if row['delta'] < 0:
+            row['status'] = 1
+        else:
+            row['status'] = 0
+    users_plan_fact_table_data = pd.merge(users_plan_fact_data, initial_values.users_df, on='user_id', how='left')
+    users_plan_fact_table_data['Менеджер'] = users_plan_fact_table_data['name'] + ', ' + users_plan_fact_table_data['position']
+    users_plan_fact_table_df = users_plan_fact_table_data.loc[:, ['Менеджер', 'visit_plan', 'fact', 'status']]
+    status_dict = {0: "Не выполнен", 1: "Выполнен"}
+    users_plan_fact_table_df['status'] = users_plan_fact_table_df['status'].map(status_dict)
+    users_plan_fact_table_df.rename(columns={'visit_plan': 'План визитов', 'fact': 'Факт визитов', 'status': 'Статус выполнения плана'}, inplace=True)
+
+    users_plan_fact_table_df.to_csv('Data/users_plan_fact_table_df_delete.csv')
 
 
 
-
-    return events_plan_fact_df, region_checklist_data, region_list, quarter_all_dates_df, first_day_of_selection, last_day_of_selection, customer_visit_plan_df
+    return events_plan_fact_df, region_checklist_data, region_list, quarter_all_dates_df, first_day_of_selection, last_day_of_selection, customer_visit_plan_df, users_plan_fact_table_df
 
 
 

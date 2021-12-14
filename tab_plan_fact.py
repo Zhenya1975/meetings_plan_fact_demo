@@ -2,6 +2,8 @@ from dash import dcc, html
 import dash_bootstrap_components as dbc
 import initial_values
 
+
+df = initial_values.users_df
 def tab_plan_fact():
     tab_plan_fact = dcc.Tab(
         label='Встречи. План-факт',
@@ -124,9 +126,14 @@ def tab_plan_fact():
                     ),
             dbc.Col(width=9,
                     children=[
-                        html.Div(dcc.Graph(id="meetings_plan_fact_graph"), className="m-4")
+                        html.Div(dcc.Graph(id="meetings_plan_fact_graph"), className="m-4"),
+                        html.Div(id = 'users_plan_fact_table'
+
+                        ),
+
                         #dcc.Graph(id='meetings_plan_fact_graph', config={'displayModeBar': False}),
                     ]),
+
         ]
 
         )]

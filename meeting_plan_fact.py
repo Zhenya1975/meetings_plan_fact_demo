@@ -86,6 +86,7 @@ def prepare_meetings_fact_data(quarter_selector_value, year_selector_value, sele
     regions_full = pd.read_csv('Data/regions.csv')
     regions_with_names = pd.merge(regions_unique_list, regions_full, on='region_code', how='left')
     regions_with_names.sort_values('region_name', inplace=True)
+
     region_checklist_data = []
     region_list = []
     for index, row in regions_with_names.iterrows():

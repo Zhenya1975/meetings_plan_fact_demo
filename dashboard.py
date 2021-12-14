@@ -119,14 +119,8 @@ def cut_selection_by_quarter(quarter_selector, year_selector, select_all_regions
     region_list_options = meeting_plan_fact.prepare_meetings_fact_data(quarter_selector, year_selector, region_selector_selected_list)[1]
     region_list_value_full = meeting_plan_fact.prepare_meetings_fact_data(quarter_selector, year_selector, region_selector_selected_list)[2]
 
-    regions_list = region_list_value_full
-    # если есть что-то выбранное в чек-листе регионов, то берем список оттуда.
-    # если нет, то используем полный список значений
-    if region_selector_selected_list:
-        region_list_value = region_selector_selected_list
-    else:
-        region_list_value = regions_list
 
+    region_list_value = region_list_value_full
 
     id_checklist_region = 'region_selector_checklist_tab_plan_fact'
     # если кликнули по чек-листу, то берем значение из выбранного списка
@@ -136,7 +130,7 @@ def cut_selection_by_quarter(quarter_selector, year_selector, select_all_regions
 
     # при клике на кнопку Выбрать все - выбираем все и наоборот
     if id_select_all_regions_button in changed_id:
-        region_list_value = regions_list
+        region_list_value = region_list_value_full
     elif id_release_all_regions_button in changed_id:
         region_list_value = []
 

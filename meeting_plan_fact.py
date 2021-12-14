@@ -4,7 +4,7 @@ import pandas as pd
 import datetime
 
 
-def prepare_meetings_fact_data(quarter_selector_value, year_selector_value, selected_regions):
+def prepare_meetings_fact_data(quarter_selector_value, year_selector_value, selected_regions, meetings_data_selector):
     customer_df = initial_values.customer_df
     events_df = initial_values.closed_events_df
     # нам нужны строки со статусом "Завершен" и с периодом текущего квартала.
@@ -138,11 +138,15 @@ def prepare_meetings_fact_data(quarter_selector_value, year_selector_value, sele
         fact_result_list.append(dict_temp)
 
     events_plan_fact_df = pd.DataFrame(fact_result_list)
-    # удаляем строки в которых предыдущий факт больше или равен плана. То есть уже норма выполнена
-    events_plan_fact_filtered_df = events_plan_fact_df.loc[events_plan_fact_df['visit_plan'] > events_plan_fact_df['prev_fact']]
+    if meetings_data_selector == 'include_plan_fact_meetings':
+        # удаляем строки в которых предыдущий факт больше или равен плана. То есть уже норма выполнена
+        events_plan_fact_df = events_plan_fact_df.loc[events_plan_fact_df['visit_plan'] > events_plan_fact_df['prev_fact']]
 
 
-    return events_plan_fact_filtered_df, region_checklist_data, region_list, quarter_all_dates_df, first_day_of_selection, last_day_of_selection, customer_visit_plan_df
+
+
+
+    return events_plan_fact_df, region_checklist_data, region_list, quarter_all_dates_df, first_day_of_selection, last_day_of_selection, customer_visit_plan_df
 
 
 

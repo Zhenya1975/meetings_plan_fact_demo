@@ -40,11 +40,10 @@ events_df = events_df.astype({"deal_id": int, 'customer_id': int})
 events_df['visits_fact'] = 0
 events_df['plan_fact_status'] = 0
 
-# уделяем строки без даты завершения. Это будет датафрейм closed_events
+# удаляем строки без даты завершения. Это будет датафрейм closed_events
 closed_events_df = events_df.dropna(subset=['close_date'])
 # в таблицу customers добавляем колонку "visits_fact" и заполняем ее нулями
 customer_df['visits_fact'] = 0
-
 
 
 #  собираем данные о менеджерах и регионах из events

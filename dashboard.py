@@ -14,7 +14,6 @@ This example demos:
 
 from dash import Dash, dcc, html, Input, Output, callback_context
 import pandas as pd
-import plotly.express as px
 import dash_bootstrap_components as dbc
 from dash_bootstrap_templates import ThemeSwitchAIO
 from dash_bootstrap_templates import load_figure_template
@@ -22,6 +21,7 @@ from dash_bootstrap_templates import load_figure_template
 import meeting_plan_fact
 import tab_plan_fact
 import functions_file
+import tab_settings
 import plotly.graph_objects as go
 
 # select the Bootstrap stylesheet2 and figure template2 for the theme toggle here:
@@ -73,7 +73,7 @@ app.layout = dbc.Container(
                             children=[
                                 tab_plan_fact.tab_plan_fact(),
                                 # tab_calendar_actions.calendar_actions(),
-                                # tab_settings.tab_settings(),
+                                tab_settings.tab_settings(),
                                 # tab2(),
                                 # tab3(),
                             ]
@@ -106,9 +106,10 @@ app.layout = dbc.Container(
         Input('select_all_managers_button_tab_plan_fact', 'n_clicks'),
         Input('release_all_managers_button_tab_plan_fact', 'n_clicks'),
         Input('managers_selector_checklist_tab_plan_fact', 'value'),
+        Input('meetings_data_selector', 'value'),
 
    ])
-def cut_selection_by_quarter(quarter_selector, year_selector, select_all_regions_button, release_all_regions_button, region_selector_selected_list, theme_selector, select_all_users_button, release_all_users_button, managers_from_checklist):
+def cut_selection_by_quarter(quarter_selector, year_selector, select_all_regions_button, release_all_regions_button, region_selector_selected_list, theme_selector, select_all_users_button, release_all_users_button, managers_from_checklist, meetings_data_selector):
 
     changed_id = [p['prop_id'] for p in callback_context.triggered][0]
 
@@ -116,8 +117,8 @@ def cut_selection_by_quarter(quarter_selector, year_selector, select_all_regions
     id_select_all_regions_button = "select_all_regions_button_tab_plan_fact"
     id_release_all_regions_button = "release_all_regions_button_tab_plan_fact"
 
-    region_list_options = meeting_plan_fact.prepare_meetings_fact_data(quarter_selector, year_selector, region_selector_selected_list)[1]
-    region_list_value_full = meeting_plan_fact.prepare_meetings_fact_data(quarter_selector, year_selector, region_selector_selected_list)[2]
+    region_list_options = meeting_plan_fact.prepare_meetings_fact_data(quarter_selector, year_selector, region_selector_selected_list, meetings_data_selector)[1]
+    region_list_value_full = meeting_plan_fact.prepare_meetings_fact_data(quarter_selector, year_selector, region_selector_selected_list, meetings_data_selector)[2]
 
 
     region_list_value = region_list_value_full
@@ -127,7 +128,6 @@ def cut_selection_by_quarter(quarter_selector, year_selector, select_all_regions
     if id_checklist_region in changed_id:
         region_list_value = region_selector_selected_list
 
-
     # при клике на кнопку Выбрать все - выбираем все и наоборот
     if id_select_all_regions_button in changed_id:
         region_list_value = region_list_value_full
@@ -136,7 +136,7 @@ def cut_selection_by_quarter(quarter_selector, year_selector, select_all_regions
 
 
     # данные, обрезанные по датам начала и конца квартала
-    data_selected_quarter = meeting_plan_fact.prepare_meetings_fact_data(quarter_selector, year_selector, region_selector_selected_list)[0]
+    data_selected_quarter = meeting_plan_fact.prepare_meetings_fact_data(quarter_selector, year_selector, region_selector_selected_list, meetings_data_selector)[0]
 
     ################# блок получения данных для чек-листа пользователей ################
     users_data = functions_file.get_unique_users(data_selected_quarter, region_list_value, managers_from_checklist)
@@ -164,7 +164,7 @@ def cut_selection_by_quarter(quarter_selector, year_selector, select_all_regions
 
     ###### готовим данные для построения графика ########
     meetings_fact_graph_data = events_df_selected_by_quarter_filtered_by_regions.groupby('close_date', as_index=False)["qty"].sum()
-    quarter_dates_df = meeting_plan_fact.prepare_meetings_fact_data(quarter_selector, year_selector, region_selector_selected_list)[3]
+    quarter_dates_df = meeting_plan_fact.prepare_meetings_fact_data(quarter_selector, year_selector, region_selector_selected_list, meetings_data_selector)[3]
     df_meetings_fact_graph = pd.merge(quarter_dates_df, meetings_fact_graph_data, on='close_date', how='left')
     df_meetings_fact_graph.fillna(0, inplace=True)
     df_meetings_fact_graph.loc[:, 'cumsum'] = df_meetings_fact_graph['qty'].cumsum()
@@ -191,10 +191,10 @@ def cut_selection_by_quarter(quarter_selector, year_selector, select_all_regions
 
     start_quarter_date = functions_file.quarter_important_days(quarter_selector, year_selector)[0]
     finish_quarter_date = functions_file.quarter_important_days(quarter_selector, year_selector)[1]
-    start_date = meeting_plan_fact.prepare_meetings_fact_data(quarter_selector, year_selector, region_selector_selected_list)[4].strftime("%d.%m.%Y")
-    finish_date = meeting_plan_fact.prepare_meetings_fact_data(quarter_selector, year_selector, region_selector_selected_list)[5].strftime("%d.%m.%Y")
+    start_date = meeting_plan_fact.prepare_meetings_fact_data(quarter_selector, year_selector, region_selector_selected_list, meetings_data_selector)[4].strftime("%d.%m.%Y")
+    finish_date = meeting_plan_fact.prepare_meetings_fact_data(quarter_selector, year_selector, region_selector_selected_list, meetings_data_selector)[5].strftime("%d.%m.%Y")
 
-    customer_data_df = meeting_plan_fact.prepare_meetings_fact_data(quarter_selector, year_selector, region_selector_selected_list)[6]
+    customer_data_df = meeting_plan_fact.prepare_meetings_fact_data(quarter_selector, year_selector, region_selector_selected_list, meetings_data_selector)[6]
     customer_data_df = customer_data_df.loc[customer_data_df['region_code'].isin(region_list_value) & customer_data_df['user_id'].isin(users_list_values)]
 
     plan_value = customer_data_df['visit_plan'].sum()
@@ -214,6 +214,7 @@ def cut_selection_by_quarter(quarter_selector, year_selector, select_all_regions
         xaxis={'range': [start_quarter_date, finish_quarter_date]},
         title='Завершено: {}<br><sup>c {} по {}</sup> '.format(fact_at_current_date, start_date, finish_date),
     )
+
 
 
     return region_list_value, region_list_options, users_list_values, users_list_options, fig

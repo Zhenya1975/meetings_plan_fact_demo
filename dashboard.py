@@ -227,7 +227,7 @@ def cut_selection_by_quarter(quarter_selector, year_selector, select_all_regions
     customer_visit_plan_filtered_df = customer_visit_plan_df.loc[customer_visit_plan_df['region_code'].isin(region_list_value)]
     user_plan_df = customer_visit_plan_filtered_df.groupby(['user_id'],as_index=False)[['visit_plan']].sum()
     fact_df = events_df_selected_by_quarter_filtered_by_regions.groupby(['user_id'],as_index=False)['qty'].sum()
-    events_df_selected_by_quarter_filtered_by_regions.to_csv('Data/events_df_selected_by_quarter_filtered_by_regions_delete.csv')
+
     plan_fact_df = pd.merge(user_plan_df, fact_df, on='user_id', how='left')
     plan_fact_df.fillna(0, inplace=True)
     plan_fact_df = plan_fact_df.astype({"qty": int})

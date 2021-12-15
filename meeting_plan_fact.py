@@ -96,12 +96,8 @@ def prepare_meetings_fact_data(quarter_selector_value, year_selector_value, sele
         region_checklist_data.append(dict_temp)
         region_list.append(row['region_code'])
 
-    # вытаскиваем данные о плане.
-
-    users_df = initial_values.users_df
-    segments_visit_plan = initial_values.segments_visit_plan
-
-    customer_visit_plan_df = pd.merge(customer_df, segments_visit_plan, on='segment_letter', how='left')
+    # Cписок клиентов с планом посещений
+    customer_visit_plan_df = initial_values.customers_visit_plan()
 
     # получаем данные по динамике выполнения плана
     customer_visit_plan = customer_visit_plan_df.loc[:, ['customer_id', 'visit_plan']]

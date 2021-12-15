@@ -145,7 +145,10 @@ def cut_selection_by_quarter(quarter_selector, year_selector, select_all_regions
     data_selected_quarter = meeting_plan_fact.prepare_meetings_fact_data(quarter_selector, year_selector, region_selector_selected_list, meetings_data_selector)[0]
 
     ################# блок получения данных для чек-листа пользователей ################
-    users_data = functions_file.get_unique_users(data_selected_quarter, region_list_value, managers_from_checklist)
+    # Cписок клиентов с планом посещений
+    customer_visit_plan_df = initial_values.customers_visit_plan()
+    users_data = functions_file.get_unique_users(customer_visit_plan_df, region_list_value, managers_from_checklist)
+
     users_list_options = users_data[0]
     users_list_values = users_data[1]
 
@@ -223,7 +226,6 @@ def cut_selection_by_quarter(quarter_selector, year_selector, select_all_regions
     ############# Таблица с данными о выполнении плана сотрудниками ################
     # Имя пользователя. План. Факт. Статус выполнения плана
     customer_visit_plan_df = meeting_plan_fact.prepare_meetings_fact_data(quarter_selector, year_selector, region_selector_selected_list, meetings_data_selector)[6]
-
     customer_visit_plan_filtered_df = customer_visit_plan_df.loc[customer_visit_plan_df['region_code'].isin(region_list_value)]
     user_plan_df = customer_visit_plan_filtered_df.groupby(['user_id'],as_index=False)[['visit_plan']].sum()
     fact_df = events_df_selected_by_quarter_filtered_by_regions.groupby(['user_id'],as_index=False)['qty'].sum()

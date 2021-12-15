@@ -16,6 +16,11 @@ else:
     users_df = pd.read_csv('Data/users.csv')
     segments_visit_plan = pd.read_csv('Data/segments_visits_plans_demo.csv')
 
+def customers_visit_plan():
+    """Список клиентов и план их посещений"""
+    customer_visit_plan_df = pd.merge(customer_df, segments_visit_plan, on='segment_letter', how='left')
+    return customer_visit_plan_df
+
 def get_curent_quarter_and_year():
     """получение текущего квартала и года"""
     current_date = datetime.datetime.now()
@@ -48,16 +53,17 @@ customer_df['visits_fact'] = 0
 
 #  собираем данные о менеджерах и регионах из events
 def prepare_users_list():
-    events_df = pd.read_csv('Data/events.csv')
-    list_of_users = events_df.loc[:, ['user_id']]
+    # events_df = pd.read_csv('Data/events.csv')
+    # list_of_users = events_df.loc[:, ['user_id']]
     # list_of_unique_users - список уникальных пользователей в таблице встреч
-    list_of_unique_users = pd.DataFrame(list_of_users['user_id'].unique(), columns=['user_id'])
+
+    list_of_unique_users = pd.DataFrame(customer_df['user_id'].unique(), columns=['user_id'])
     result_df_list = []
     # итерируемся по списку уникальных пользователей
     for index, row_user_id in list_of_unique_users.iterrows():
         dict_temp = {}
         user_id = row_user_id['user_id']
-        # temp_df - выборка из таблицы встреч по текущенму юзеру в цикле
+        # temp_df - выборка из таблицы встреч по текущему юзеру в цикле
         temp_df = events_df.loc[events_df['user_id']==user_id]
         user_region_list = []
         # итерируемся по полученной выборке и собираем все регионы, которые нам попадутся
@@ -66,7 +72,12 @@ def prepare_users_list():
             #if region_code !=0 and region_code not in user_region_list:
             if region_code not in user_region_list:
                 user_region_list.append(region_code)
-
+        customer_temp_df = customer_df[customer_df['user_id'] == user_id]
+        for index, row_events_selection in customer_temp_df.iterrows():
+            region_code = row_events_selection['region_code']
+            #if region_code !=0 and region_code not in user_region_list:
+            if region_code not in user_region_list:
+                user_region_list.append(region_code)
         # Проверяем. Если список регионов у юзера пустой, то даем ему регион с кодом ноль
         if len(user_region_list) == 0:
             dict_temp['user_id'] = user_id

@@ -18,12 +18,14 @@ import dash_bootstrap_components as dbc
 from dash_bootstrap_templates import ThemeSwitchAIO
 from dash_bootstrap_templates import load_figure_template
 from dash import dash_table
-
+import plotly.graph_objects as go
 import meeting_plan_fact
 import tab_plan_fact
 import functions_file
 import tab_settings
-import plotly.graph_objects as go
+import initial_values
+
+
 
 # select the Bootstrap stylesheet2 and figure template2 for the theme toggle here:
 # template_theme1 = "sketchy"
@@ -122,8 +124,10 @@ def cut_selection_by_quarter(quarter_selector, year_selector, select_all_regions
     region_list_options = meeting_plan_fact.prepare_meetings_fact_data(quarter_selector, year_selector, region_selector_selected_list, meetings_data_selector)[1]
     region_list_value_full = meeting_plan_fact.prepare_meetings_fact_data(quarter_selector, year_selector, region_selector_selected_list, meetings_data_selector)[2]
 
-
-    region_list_value = region_list_value_full
+    if region_selector_selected_list:
+        region_list_value = region_selector_selected_list
+    else:
+        region_list_value = region_list_value_full
 
     id_checklist_region = 'region_selector_checklist_tab_plan_fact'
     # если кликнули по чек-листу, то берем значение из выбранного списка
@@ -174,7 +178,6 @@ def cut_selection_by_quarter(quarter_selector, year_selector, select_all_regions
     x = df_meetings_fact_graph['close_date']
     y = df_meetings_fact_graph['cumsum']
     fact_at_current_date = df_meetings_fact_graph.iloc[-1]['cumsum']
-
     ########### ГРАФИК ФАКТ ВСТРЕЧ #######################
 
     if theme_selector:
@@ -219,12 +222,45 @@ def cut_selection_by_quarter(quarter_selector, year_selector, select_all_regions
 
     ############# Таблица с данными о выполнении плана сотрудниками ################
     # Имя пользователя. План. Факт. Статус выполнения плана
-    user_plan_fact_data = meeting_plan_fact.prepare_meetings_fact_data(quarter_selector, year_selector, region_selector_selected_list, meetings_data_selector)[7]
-    # plan_fact_table = dbc.Table().from_dataframe(user_plan_fact_data)
+    customer_visit_plan_df = meeting_plan_fact.prepare_meetings_fact_data(quarter_selector, year_selector, region_selector_selected_list, meetings_data_selector)[6]
+
+    customer_visit_plan_filtered_df = customer_visit_plan_df.loc[customer_visit_plan_df['region_code'].isin(region_list_value)]
+    user_plan_df = customer_visit_plan_filtered_df.groupby(['user_id'],as_index=False)[['visit_plan']].sum()
+    fact_df = events_df_selected_by_quarter_filtered_by_regions.groupby(['user_id'],as_index=False)['qty'].sum()
+    events_df_selected_by_quarter_filtered_by_regions.to_csv('Data/events_df_selected_by_quarter_filtered_by_regions_delete.csv')
+    plan_fact_df = pd.merge(user_plan_df, fact_df, on='user_id', how='left')
+    plan_fact_df.fillna(0, inplace=True)
+    plan_fact_df = plan_fact_df.astype({"qty": int})
+    plan_fact_df = plan_fact_df.loc[plan_fact_df['user_id'].isin(users_list_values)]
+    plan_fact_df.rename(columns={'qty': 'visit_fact'}, inplace=True)
+    plan_fact_df['delta'] = plan_fact_df['visit_plan'] - plan_fact_df['visit_fact']
+    plan_fact_df['status'] = 0
+    for index, row in plan_fact_df.iterrows():
+        if row['delta'] < 0:
+            row['status'] = 1
+        else:
+            row['status'] = 0
+    users_plan_fact_table_data = pd.merge(plan_fact_df, initial_values.users_df, on='user_id', how='left')
+    users_plan_fact_table_data['Менеджер'] = users_plan_fact_table_data['name'] + ', ' + users_plan_fact_table_data['position']
+    users_plan_fact_table_df = users_plan_fact_table_data.loc[:, ['Менеджер', 'visit_plan', 'visit_fact', 'status']]
+    status_dict = {0: "Не выполнен", 1: "Выполнен"}
+    users_plan_fact_table_df['status'] = users_plan_fact_table_df['status'].map(status_dict)
+    users_plan_fact_table_df.rename(columns={'visit_plan': 'План визитов', 'visit_fact': 'Факт визитов', 'status': 'Статус выполнения плана'}, inplace=True)
+
+
     users_plan_fact_table = dash_table.DataTable(
                             # id='table',
-                            columns=[{"name": i, "id": i} for i in user_plan_fact_data.columns],
-                            data=user_plan_fact_data.to_dict('records'),
+                            columns=[{"name": i, "id": i} for i in users_plan_fact_table_df.columns],
+                            data=users_plan_fact_table_df.to_dict('records'),
+                            style_header={
+                                'backgroundColor': 'white',
+                                'fontWeight': 'bold'
+                            },
+                            style_data={
+                                'whiteSpace': 'normal',
+                                'height': 'auto',
+                            },
+                            style_cell={'textAlign': 'left'},
                         )
 
     return region_list_value, region_list_options, users_list_values, users_list_options, fig, users_plan_fact_table

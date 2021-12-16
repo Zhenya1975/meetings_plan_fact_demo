@@ -12,13 +12,15 @@ This example demos:
 
 """
 
-from dash import Dash, dcc, html, Input, Output, callback_context
+from dash import Dash, dcc, html, Input, Output, callback_context, State
 import pandas as pd
 import dash_bootstrap_components as dbc
 from dash_bootstrap_templates import ThemeSwitchAIO
 from dash_bootstrap_templates import load_figure_template
 from dash import dash_table
 import plotly.graph_objects as go
+import base64
+import io
 import tab_plan_fact
 import functions_file
 import tab_settings
@@ -97,6 +99,7 @@ app.layout = dbc.Container(
     Output("managers_selector_checklist_tab_plan_fact", "options"),
     Output('meetings_plan_fact_graph', 'figure'),
     Output('users_plan_fact_table', 'children'),
+    Output('alert_upload', 'children'),
    ],
 
     [
@@ -110,9 +113,13 @@ app.layout = dbc.Container(
         Input('release_all_managers_button_tab_plan_fact', 'n_clicks'),
         Input('managers_selector_checklist_tab_plan_fact', 'value'),
         Input('meetings_data_selector', 'value'),
+        Input('upload_meetings', 'contents')],
+    [State('upload_meetings', 'filename')])
 
-   ])
-def cut_selection_by_quarter(quarter_selector, year_selector, select_all_regions_button, release_all_regions_button, region_selector_selected_list, theme_selector, select_all_users_button, release_all_users_button, managers_from_checklist, meetings_data_selector):
+
+
+
+def cut_selection_by_quarter(quarter_selector, year_selector, select_all_regions_button, release_all_regions_button, region_selector_selected_list, theme_selector, select_all_users_button, release_all_users_button, managers_from_checklist, meetings_data_selector, contents, filename):
 
     changed_id = [p['prop_id'] for p in callback_context.triggered][0]
 
@@ -286,7 +293,48 @@ def cut_selection_by_quarter(quarter_selector, year_selector, select_all_regions
                             style_cell={'textAlign': 'left'},
                         )
 
-    return region_list_value, region_list_options, users_list_values, users_list_options, fig, users_plan_fact_table
+    # если с кнопки Загрузить что-то к нам заехало, то:
+    alert_upload = html.Div()
+    if contents is not None:
+        # парсим то, что мы получили
+        content_type, content_string = contents.split(',')
+        decoded = base64.b64decode(content_string)
+        # делаем попытку прочитать эксель
+        try:
+            if 'xlsx' in filename:
+                # если к нам загружен эксель, то делаем из него датафрейм plan_df
+                event_template_df = pd.read_excel(io.BytesIO(decoded))
+                event_template_df.to_csv('Data/event_template_uploaded.csv')
+                alert_upload = dbc.Alert(
+            "Файл успешно загружен!",
+            id="upload_success",
+            duration=4000,
+            color="success",
+        ),
+                # здесь надо сделать проверку загруженных из эксель данных
+                # print('эксель успешно загружен')
+                # если файл не ексель, то пока просто ничего не делаем
+        # если попытка загрузить не прошла по каким-то причинам, то пока ничего не далем. Выводим в принт
+        except Exception as e:
+            print('при попытке загрузить excal файл возникло исключение', e)
+            alert_upload = dbc.Alert(
+                "Не удалось загрузить файл!",
+                id="upload_failed",
+                duration=4000,
+                color="danger",
+            ),
+
+    return region_list_value, region_list_options, users_list_values, users_list_options, fig, users_plan_fact_table, alert_upload
+# обработчик кнопки выгрузки наружу файла "plan_template.xlsx"
+@app.callback(
+    Output("download-meetings-xlsx", "data"),
+    Input("btn_xlsx", "n_clicks"),
+    prevent_initial_call=True,
+)
+def func(n_clicks):
+    if n_clicks:
+        df = pd.read_csv('Data/events_template.csv')
+        return dcc.send_data_frame(df.to_excel, "events_template.xlsx", index=False, sheet_name="events_template")
 
 
 if __name__ == "__main__":

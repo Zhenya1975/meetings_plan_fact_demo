@@ -19,7 +19,6 @@ from dash_bootstrap_templates import ThemeSwitchAIO
 from dash_bootstrap_templates import load_figure_template
 from dash import dash_table
 import plotly.graph_objects as go
-import meeting_plan_fact
 import tab_plan_fact
 import functions_file
 import tab_settings
@@ -117,12 +116,30 @@ def cut_selection_by_quarter(quarter_selector, year_selector, select_all_regions
 
     changed_id = [p['prop_id'] for p in callback_context.triggered][0]
 
+    closed_events = initial_values.closed_events
+
+    first_day_of_selection = functions_file.quarter_days(quarter_selector, year_selector)[0]
+    last_day_of_selection = functions_file.quarter_days(quarter_selector, year_selector)[1]
+    events_df_selected_by_quarter = functions_file.cut_df_by_dates_interval(closed_events, 'close_date', first_day_of_selection, last_day_of_selection)
+
+    # датафрем по закрытым ивентам в выбранный квартал подготовлен.
+    # Выбираем из него поля и эту заготовку отправляем на работу по построению графиков
+    events_df_selected_by_quarter_ready = events_df_selected_by_quarter.loc[:,
+                                          ['event_id', 'user_id', 'user_code', 'plan_date', 'close_date', 'customer_id',
+                                           'region_name', 'region_code', 'deal_id', 'description', 'close_comment',
+                                           'qty']]
+    events_df_selected_by_quarter_ready = events_df_selected_by_quarter_ready.reset_index(drop=True)
+
+    # получаем данные для чек-боксов регионов
+    region_list_options = functions_file.regions_checklist_data(events_df_selected_by_quarter_ready)[0]
+    region_list_value_full = functions_file.regions_checklist_data(events_df_selected_by_quarter_ready)[1]
+
     # Обработчик кнопок Снять / Выбрать в блоке Регионы
     id_select_all_regions_button = "select_all_regions_button_tab_plan_fact"
     id_release_all_regions_button = "release_all_regions_button_tab_plan_fact"
 
-    region_list_options = meeting_plan_fact.prepare_meetings_fact_data(quarter_selector, year_selector, region_selector_selected_list, meetings_data_selector)[1]
-    region_list_value_full = meeting_plan_fact.prepare_meetings_fact_data(quarter_selector, year_selector, region_selector_selected_list, meetings_data_selector)[2]
+    #region_list_options = meeting_plan_fact.prepare_meetings_fact_data(quarter_selector, year_selector, region_selector_selected_list, meetings_data_selector)[1]
+    #region_list_value_full = meeting_plan_fact.prepare_meetings_fact_data(quarter_selector, year_selector, region_selector_selected_list, meetings_data_selector)[2]
 
     if region_selector_selected_list:
         region_list_value = region_selector_selected_list
@@ -141,8 +158,7 @@ def cut_selection_by_quarter(quarter_selector, year_selector, select_all_regions
         region_list_value = []
 
 
-    # данные, обрезанные по датам начала и конца квартала
-    data_selected_quarter = meeting_plan_fact.prepare_meetings_fact_data(quarter_selector, year_selector, region_selector_selected_list, meetings_data_selector)[0]
+
 
     ################# блок получения данных для чек-листа пользователей ################
     # Cписок клиентов с планом посещений
@@ -167,13 +183,16 @@ def cut_selection_by_quarter(quarter_selector, year_selector, select_all_regions
         users_list_options = users_data[0]
         users_list_values = []
 
-
+    # данные, обрезанные по датам начала и конца квартала
+    # data_selected_quarter = meeting_plan_fact.prepare_meetings_fact_data(quarter_selector, year_selector, region_selector_selected_list, meetings_data_selector)[0]
+    data_selected_quarter = functions_file.plan_fact_df_prep(events_df_selected_by_quarter_ready, meetings_data_selector)
     # фильтруем датафрейм по выбранным в чек-листе регионам и пользователям:
     events_df_selected_by_quarter_filtered_by_regions = data_selected_quarter.loc[data_selected_quarter['region_code'].isin(region_list_value) & data_selected_quarter['user_id'].isin(users_list_values)]
 
     ###### готовим данные для построения графика ########
     meetings_fact_graph_data = events_df_selected_by_quarter_filtered_by_regions.groupby('close_date', as_index=False)["qty"].sum()
-    quarter_dates_df = meeting_plan_fact.prepare_meetings_fact_data(quarter_selector, year_selector, region_selector_selected_list, meetings_data_selector)[3]
+    quarter_dates_df = functions_file.quarter_all_dates_prepare(first_day_of_selection, last_day_of_selection)
+    # quarter_dates_df = meeting_plan_fact.prepare_meetings_fact_data(quarter_selector, year_selector, region_selector_selected_list, meetings_data_selector)[3]
     df_meetings_fact_graph = pd.merge(quarter_dates_df, meetings_fact_graph_data, on='close_date', how='left')
     df_meetings_fact_graph.fillna(0, inplace=True)
     df_meetings_fact_graph.loc[:, 'cumsum'] = df_meetings_fact_graph['qty'].cumsum()
@@ -199,10 +218,12 @@ def cut_selection_by_quarter(quarter_selector, year_selector, select_all_regions
 
     start_quarter_date = functions_file.quarter_important_days(quarter_selector, year_selector)[0]
     finish_quarter_date = functions_file.quarter_important_days(quarter_selector, year_selector)[1]
-    start_date = meeting_plan_fact.prepare_meetings_fact_data(quarter_selector, year_selector, region_selector_selected_list, meetings_data_selector)[4].strftime("%d.%m.%Y")
-    finish_date = meeting_plan_fact.prepare_meetings_fact_data(quarter_selector, year_selector, region_selector_selected_list, meetings_data_selector)[5].strftime("%d.%m.%Y")
-
-    customer_data_df = meeting_plan_fact.prepare_meetings_fact_data(quarter_selector, year_selector, region_selector_selected_list, meetings_data_selector)[6]
+    # start_date = meeting_plan_fact.prepare_meetings_fact_data(quarter_selector, year_selector, region_selector_selected_list, meetings_data_selector)[4].strftime("%d.%m.%Y")
+    start_date = first_day_of_selection
+    # finish_date = meeting_plan_fact.prepare_meetings_fact_data(quarter_selector, year_selector, region_selector_selected_list, meetings_data_selector)[5].strftime("%d.%m.%Y")
+    finish_date = last_day_of_selection
+    # customer_data_df = meeting_plan_fact.prepare_meetings_fact_data(quarter_selector, year_selector, region_selector_selected_list, meetings_data_selector)[6]
+    customer_data_df = customer_visit_plan_df
     customer_data_df = customer_data_df.loc[customer_data_df['region_code'].isin(region_list_value) & customer_data_df['user_id'].isin(users_list_values)]
 
     plan_value = customer_data_df['visit_plan'].sum()
@@ -225,7 +246,7 @@ def cut_selection_by_quarter(quarter_selector, year_selector, select_all_regions
 
     ############# Таблица с данными о выполнении плана сотрудниками ################
     # Имя пользователя. План. Факт. Статус выполнения плана
-    customer_visit_plan_df = meeting_plan_fact.prepare_meetings_fact_data(quarter_selector, year_selector, region_selector_selected_list, meetings_data_selector)[6]
+    # customer_visit_plan_df = meeting_plan_fact.prepare_meetings_fact_data(quarter_selector, year_selector, region_selector_selected_list, meetings_data_selector)[6]
     customer_visit_plan_filtered_df = customer_visit_plan_df.loc[customer_visit_plan_df['region_code'].isin(region_list_value)]
     user_plan_df = customer_visit_plan_filtered_df.groupby(['user_id'],as_index=False)[['visit_plan']].sum()
     fact_df = events_df_selected_by_quarter_filtered_by_regions.groupby(['user_id'],as_index=False)['qty'].sum()

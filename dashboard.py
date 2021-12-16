@@ -119,11 +119,53 @@ app.layout = dbc.Container(
 
 
 
-def cut_selection_by_quarter(quarter_selector, year_selector, select_all_regions_button, release_all_regions_button, region_selector_selected_list, theme_selector, select_all_users_button, release_all_users_button, managers_from_checklist, meetings_data_selector, contents, filename):
+def meeting_plan_fact(quarter_selector, year_selector, select_all_regions_button, release_all_regions_button, region_selector_selected_list, theme_selector, select_all_users_button, release_all_users_button, managers_from_checklist, meetings_data_selector, contents, filename):
 
     changed_id = [p['prop_id'] for p in callback_context.triggered][0]
 
     closed_events = initial_values.closed_events
+
+    #######################################################################
+    # если с кнопки Загрузить что-то к нам заехало, то:
+    alert_upload = html.Div()
+    if contents is not None:
+        # парсим то, что мы получили
+        content_type, content_string = contents.split(',')
+        decoded = base64.b64decode(content_string)
+        # делаем попытку прочитать эксель
+        try:
+            if 'xlsx' in filename:
+                # если к нам загружен эксель, то делаем из него датафрейм plan_df
+                event_template_df = pd.read_excel(io.BytesIO(decoded))
+                # Отправляем полученный файл в обработчик. На выходе получаем events.csv, events_demo.csv и запускаем функции в initial_values
+                functions_file.events_demo_prepare(event_template_df)
+
+                alert_upload = dbc.Alert(
+                    "Файл успешно загружен!",
+                    id="upload_success",
+                    duration=4000,
+                    color="success",
+                ),
+            else:
+                alert_upload = dbc.Alert(
+                    "Формат загруженного файла - не '.xlsx'!",
+                    id="upload_failed",
+                    duration=4000,
+                    color="danger",
+                ),
+                # здесь надо сделать проверку загруженных из эксель данных
+                # print('эксель успешно загружен')
+                # если файл не ексель, то пока просто ничего не делаем
+        # если попытка загрузить не прошла по каким-то причинам, то пока ничего не далем. Выводим в принт
+        except Exception as e:
+            print('при попытке загрузить excal файл возникло исключение', e)
+            alert_upload = dbc.Alert(
+                "Не удалось загрузить файл!",
+                id="upload_failed",
+                duration=4000,
+                color="danger",
+            ),
+    ##############################################################################
 
     first_day_of_selection = functions_file.quarter_days(quarter_selector, year_selector)[0]
     last_day_of_selection = functions_file.quarter_days(quarter_selector, year_selector)[1]
@@ -270,7 +312,9 @@ def cut_selection_by_quarter(quarter_selector, year_selector, select_all_regions
             row['status'] = 1
         else:
             row['status'] = 0
-    users_plan_fact_table_data = pd.merge(plan_fact_df, initial_values.users_df, on='user_id', how='left')
+    mode = initial_values.mode
+    users_df = initial_values.initial_values_init(mode)[2]
+    users_plan_fact_table_data = pd.merge(plan_fact_df, users_df, on='user_id', how='left')
     users_plan_fact_table_data['Менеджер'] = users_plan_fact_table_data['name'] + ', ' + users_plan_fact_table_data['position']
     users_plan_fact_table_df = users_plan_fact_table_data.loc[:, ['Менеджер', 'visit_plan', 'visit_fact', 'status']]
     status_dict = {0: "Не выполнен", 1: "Выполнен"}
@@ -293,36 +337,7 @@ def cut_selection_by_quarter(quarter_selector, year_selector, select_all_regions
                             style_cell={'textAlign': 'left'},
                         )
 
-    # если с кнопки Загрузить что-то к нам заехало, то:
-    alert_upload = html.Div()
-    if contents is not None:
-        # парсим то, что мы получили
-        content_type, content_string = contents.split(',')
-        decoded = base64.b64decode(content_string)
-        # делаем попытку прочитать эксель
-        try:
-            if 'xlsx' in filename:
-                # если к нам загружен эксель, то делаем из него датафрейм plan_df
-                event_template_df = pd.read_excel(io.BytesIO(decoded))
-                event_template_df.to_csv('Data/event_template_uploaded.csv')
-                alert_upload = dbc.Alert(
-            "Файл успешно загружен!",
-            id="upload_success",
-            duration=4000,
-            color="success",
-        ),
-                # здесь надо сделать проверку загруженных из эксель данных
-                # print('эксель успешно загружен')
-                # если файл не ексель, то пока просто ничего не делаем
-        # если попытка загрузить не прошла по каким-то причинам, то пока ничего не далем. Выводим в принт
-        except Exception as e:
-            print('при попытке загрузить excal файл возникло исключение', e)
-            alert_upload = dbc.Alert(
-                "Не удалось загрузить файл!",
-                id="upload_failed",
-                duration=4000,
-                color="danger",
-            ),
+
 
     return region_list_value, region_list_options, users_list_values, users_list_options, fig, users_plan_fact_table, alert_upload
 # обработчик кнопки выгрузки наружу файла "plan_template.xlsx"

@@ -56,7 +56,8 @@ def get_unique_users(df_selections, region_list_value, managers_from_checklist):
 
 
     user_list_cut_by_regions_df = pd.DataFrame(user_list_cut_by_regions, columns=['user_id'])
-    users_full = initial_values.users_df
+    mode = initial_values.mode
+    users_full = initial_values.initial_values_init(mode)[2]
     users_with_names = pd.merge(user_list_cut_by_regions_df, users_full, on='user_id', how='left')
     users_with_names.sort_values('name', inplace=True)
 
@@ -165,3 +166,36 @@ def plan_fact_df_prep(events_df_selected_by_quarter_ready, meetings_data_selecto
             events_plan_fact_df['visit_plan'] > events_plan_fact_df['prev_fact']]
 
     return events_plan_fact_df
+
+def events_demo_prepare(df):
+    """перезапись events.df и подготовка данных для events_demo"""
+    df.to_csv('Data/events.csv')
+    # подготовка demo_events - перезапись комментов
+    demo_comments = pd.read_csv('Data/communications.csv')
+    result_list = []
+    for index, row in df.iterrows():
+        temp_dict = {}
+        temp_dict['event_id'] = row['event_id']
+        temp_dict['user_id'] = row['user_id']
+        temp_dict['user_code'] = row['user_code']
+        temp_dict['plan_date'] = row['plan_date']
+        temp_dict['close_date'] = row['close_date']
+        temp_dict['customer_id'] = row['customer_id']
+        temp_dict['region_name'] = row['region_name']
+        temp_dict['region_code'] = row['region_code']
+        temp_dict['deal_id'] = row['deal_id']
+        sample_comment_df = demo_comments.sample(ignore_index=True)
+        sample_description = sample_comment_df.iloc[0]['Описание']
+        sample_close_comment = sample_comment_df.iloc[0]['Чем завершилось']
+        temp_dict['description'] = sample_description
+        if row['close_date'] == "":
+            temp_dict['close_comment'] = sample_close_comment
+        else:
+            temp_dict['close_comment'] = row['close_comment']
+
+        result_list.append(temp_dict)
+    demo_events_df = pd.DataFrame(result_list)
+    demo_events_df.to_csv('Data/demo_events.csv')
+    # запуск функций initials_values
+    # mode = initial_values.mode
+

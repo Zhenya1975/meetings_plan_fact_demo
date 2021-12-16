@@ -16,6 +16,7 @@ def tab_settings():
             dbc.Col(
                 #width=3,
                 children=[
+
                     html.Div(id='alert_upload'),
                     html.P('В отчет План-факт встреч включить:'),
                     dcc.RadioItems(

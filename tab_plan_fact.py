@@ -2,8 +2,8 @@ from dash import dcc, html
 import dash_bootstrap_components as dbc
 import initial_values
 
-
-df = initial_values.users_df
+mode = initial_values.mode
+df = initial_values.initial_values_init(mode)[2]
 def tab_plan_fact():
     tab_plan_fact = dcc.Tab(
         label='Встречи. План-факт',

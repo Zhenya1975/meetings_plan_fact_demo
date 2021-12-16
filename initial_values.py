@@ -5,19 +5,26 @@ import json
 mode = 'actual'
 # mode = 'demo'
 
-if mode == 'demo':
-    events_df = pd.read_csv('Data/demo_events.csv')
-    customer_df = pd.read_csv('Data/demo_customers.csv')
-    users_df = pd.read_csv('Data/demo_users.csv')
-    segments_visit_plan = pd.read_csv('Data/segments_visits_plans_demo.csv')
-else:
-    events_df = pd.read_csv('Data/events.csv')
-    customer_df = pd.read_csv('Data/customers.csv')
-    users_df = pd.read_csv('Data/users.csv')
-    segments_visit_plan = pd.read_csv('Data/segments_visits_plans_demo.csv')
+def initial_values_init(mode):
+    if mode == 'demo':
+        events_df = pd.read_csv('Data/demo_events.csv')
+        customer_df = pd.read_csv('Data/demo_customers.csv')
+        users_df = pd.read_csv('Data/demo_users.csv')
+        segments_visit_plan = pd.read_csv('Data/segments_visits_plans_demo.csv')
+    else:
+        events_df = pd.read_csv('Data/events.csv')
+        customer_df = pd.read_csv('Data/customers.csv')
+        users_df = pd.read_csv('Data/users.csv')
+        segments_visit_plan = pd.read_csv('Data/segments_visits_plans_demo.csv')
+    return events_df, customer_df, users_df, segments_visit_plan
+
 
 def customers_visit_plan():
     """Список клиентов и план их посещений"""
+
+    customer_df = initial_values_init(mode)[1]
+    segments_visit_plan = initial_values_init(mode)[3]
+
     customer_visit_plan_df = pd.merge(customer_df, segments_visit_plan, on='segment_letter', how='left')
     return customer_visit_plan_df
 
@@ -47,6 +54,9 @@ def closed_events_prep(events_df):
     # удаляем строки без даты завершения. Это будет датафрейм closed_events
     closed_events_df = events_df.dropna(subset=['close_date'])
     # в таблицу customers добавляем колонку "visits_fact" и заполняем ее нулями
+    events_df = initial_values_init(mode)[0]
+    customer_df = initial_values_init(mode)[1]
+
     customer_df['visits_fact'] = 0
 
     # нам нужны строки со статусом "Завершен" и с периодом текущего квартала.
@@ -81,6 +91,7 @@ def closed_events_prep(events_df):
     # сортируем по колонке close_event
     closed_events.sort_values(['close_date'], inplace=True)
     return closed_events
+events_df = initial_values_init(mode)[0]
 closed_events = closed_events_prep(events_df)
 
 #  собираем данные о менеджерах и регионах из events
@@ -88,6 +99,8 @@ def prepare_users_list():
     # events_df = pd.read_csv('Data/events.csv')
     # list_of_users = events_df.loc[:, ['user_id']]
     # list_of_unique_users - список уникальных пользователей в таблице встреч
+    events_df = initial_values_init(mode)[0]
+    customer_df = initial_values_init(mode)[1]
 
     list_of_unique_users = pd.DataFrame(customer_df['user_id'].unique(), columns=['user_id'])
     result_df_list = []
@@ -99,11 +112,11 @@ def prepare_users_list():
         temp_df = events_df.loc[events_df['user_id']==user_id]
         user_region_list = []
         # итерируемся по полученной выборке и собираем все регионы, которые нам попадутся
-        for index, row_events_selection in temp_df.iterrows():
-            region_code = row_events_selection['region_code']
-            #if region_code !=0 and region_code not in user_region_list:
-            if region_code not in user_region_list:
-                user_region_list.append(region_code)
+        # for index, row_events_selection in temp_df.iterrows():
+        #     region_code = row_events_selection['region_code']
+        #     #if region_code !=0 and region_code not in user_region_list:
+        #     if region_code not in user_region_list:
+        #         user_region_list.append(region_code)
         customer_temp_df = customer_df[customer_df['user_id'] == user_id]
         for index, row_events_selection in customer_temp_df.iterrows():
             region_code = row_events_selection['region_code']

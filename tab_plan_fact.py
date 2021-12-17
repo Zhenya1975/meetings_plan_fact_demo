@@ -126,12 +126,49 @@ def tab_plan_fact():
                     ),
             dbc.Col(width=9,
                     children=[
-                        html.Div(dcc.Graph(id="meetings_plan_fact_graph"), className="m-4"),
-                        html.Div(id = 'users_plan_fact_table'
+                        html.Div(dcc.Graph(id="meetings_plan_fact_graph", config={'displayModeBar': False}), className="m-4"),
+                        html.P(),
+                        html.Div([
+                            dcc.Tabs(
+                                id="tabs-meetings-tables",
+                                style={
+                                    # 'width': '50%',
+                                    # 'font-size': '200%',
+                                    # 'height':'5vh'
+                                },
+                                value='tab_plan_fact_managers',
+                                # parent_className='custom-tabs',
+                                # className='custom-tabs-container',
+                                children=[
+                                    dcc.Tab(
+                                        label='Встречи. План-факт по менеджерам',
+                                        value='tab_plan_fact_managers',
+                                        # className='custom-tab',
+                                        # selected_className='custom-tab--selected',
+                                        children=[dbc.Row([
+                                            dbc.Col(
+                                                html.Div(id='users_plan_fact_table'),
+                                            )])]),
+                                    dcc.Tab(
+                                        label='Клиенты. План-факт визитов',
+                                        value='tab_plan_fact_customers',
+                                        # className='custom-tab',
+                                        # selected_className='custom-tab--selected',
+                                        children=[dbc.Row([
+                                            dbc.Col(
+                                                html.Div(id='customers_plan_fact_table'),
+                                            )])]),
 
-                        ),
+                                    # tab_calendar_actions.calendar_actions(),
+                                    # tab_settings.tab_settings(),
+                                    # tab2(),
+                                    # tab3(),
+                                ]
+                            ),
+                        ]),
 
-                        #dcc.Graph(id='meetings_plan_fact_graph', config={'displayModeBar': False}),
+
+
                     ]),
 
         ]

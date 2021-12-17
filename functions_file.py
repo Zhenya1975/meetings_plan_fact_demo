@@ -46,7 +46,7 @@ def get_unique_users(df_selections, region_list_value, managers_from_checklist):
     # джойним users_unique_list с users_regions_df
 
     users_unique_list_with_regions = pd.merge(users_unique_list, users_regions_df, on='user_id', how='left')
-
+    print(users_unique_list_with_regions)
     user_list_cut_by_regions = []
     for index, row in users_unique_list_with_regions.iterrows():
         a = row['regions_list']

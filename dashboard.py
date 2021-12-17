@@ -26,7 +26,8 @@ import functions_file
 import tab_settings
 import initial_values
 
-
+mode = initial_values.mode
+initial_values.initial_values_init(mode)
 
 # select the Bootstrap stylesheet2 and figure template2 for the theme toggle here:
 # template_theme1 = "sketchy"
@@ -71,6 +72,11 @@ app.layout = dbc.Container(
                     html.Div([
                         dcc.Tabs(
                             id="tabs-all",
+                            style={
+                                    # 'width': '50%',
+                                    # 'font-size': '200%',
+                                    #'height':'5vh'
+                                },
                             value='tab_plan_fact',
                             # parent_className='custom-tabs',
                             # className='custom-tabs-container',
@@ -212,6 +218,7 @@ def meeting_plan_fact(quarter_selector, year_selector, select_all_regions_button
     ################# блок получения данных для чек-листа пользователей ################
     # Cписок клиентов с планом посещений
     customer_visit_plan_df = initial_values.customers_visit_plan()
+
     users_data = functions_file.get_unique_users(customer_visit_plan_df, region_list_value, managers_from_checklist)
 
     users_list_options = users_data[0]
@@ -327,7 +334,7 @@ def meeting_plan_fact(quarter_selector, year_selector, select_all_regions_button
                             columns=[{"name": i, "id": i} for i in users_plan_fact_table_df.columns],
                             data=users_plan_fact_table_df.to_dict('records'),
                             style_header={
-                                'backgroundColor': 'white',
+                                # 'backgroundColor': 'white',
                                 'fontWeight': 'bold'
                             },
                             style_data={

@@ -2,8 +2,8 @@ import datetime
 import pandas as pd
 import json
 
-mode = 'actual'
-# mode = 'demo'
+# mode = 'actual'
+mode = 'demo'
 
 def initial_values_init(mode):
     if mode == 'demo':
@@ -143,7 +143,7 @@ def get_users_regions_df():
     if mode == 'actual':
         users_regions_df= pd.read_csv('Data/user_regions.csv')
     else:
-        users_regions_df = pd.read_csv('Data/user_regions_demo.csv')
+        users_regions_df = pd.read_csv('Data/user_regions.csv')
     # из СSV список делаем списком
     users_regions_df['regions_list'] = users_regions_df['regions_list'].apply(lambda x: json.loads(x))
 

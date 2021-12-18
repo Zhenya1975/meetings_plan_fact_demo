@@ -105,6 +105,7 @@ app.layout = dbc.Container(
     Output("managers_selector_checklist_tab_plan_fact", "options"),
     Output('meetings_plan_fact_graph', 'figure'),
     Output('users_plan_fact_table', 'children'),
+    Output('customers_plan_fact_table', 'children'),
     Output('alert_upload', 'children'),
    ],
 
@@ -121,9 +122,6 @@ app.layout = dbc.Container(
         Input('meetings_data_selector', 'value'),
         Input('upload_meetings', 'contents')],
     [State('upload_meetings', 'filename')])
-
-
-
 
 def meeting_plan_fact(quarter_selector, year_selector, select_all_regions_button, release_all_regions_button, region_selector_selected_list, theme_selector, select_all_users_button, release_all_users_button, managers_from_checklist, meetings_data_selector, contents, filename):
 
@@ -193,9 +191,6 @@ def meeting_plan_fact(quarter_selector, year_selector, select_all_regions_button
     id_select_all_regions_button = "select_all_regions_button_tab_plan_fact"
     id_release_all_regions_button = "release_all_regions_button_tab_plan_fact"
 
-    #region_list_options = meeting_plan_fact.prepare_meetings_fact_data(quarter_selector, year_selector, region_selector_selected_list, meetings_data_selector)[1]
-    #region_list_value_full = meeting_plan_fact.prepare_meetings_fact_data(quarter_selector, year_selector, region_selector_selected_list, meetings_data_selector)[2]
-
     if region_selector_selected_list:
         region_list_value = region_selector_selected_list
     else:
@@ -240,8 +235,9 @@ def meeting_plan_fact(quarter_selector, year_selector, select_all_regions_button
         users_list_values = []
 
     # данные, обрезанные по датам начала и конца квартала
-    # data_selected_quarter = meeting_plan_fact.prepare_meetings_fact_data(quarter_selector, year_selector, region_selector_selected_list, meetings_data_selector)[0]
-    data_selected_quarter = functions_file.plan_fact_df_prep(events_df_selected_by_quarter_ready, meetings_data_selector)
+
+    data_selected_quarter = functions_file.plan_fact_df_prep(events_df_selected_by_quarter_ready, meetings_data_selector)[0]
+
     # фильтруем датафрейм по выбранным в чек-листе регионам и пользователям:
     events_df_selected_by_quarter_filtered_by_regions = data_selected_quarter.loc[data_selected_quarter['region_code'].isin(region_list_value) & data_selected_quarter['user_id'].isin(users_list_values)]
 
@@ -302,9 +298,10 @@ def meeting_plan_fact(quarter_selector, year_selector, select_all_regions_button
 
     ############# Таблица с данными о выполнении плана сотрудниками ################
     # Имя пользователя. План. Факт. Статус выполнения плана
-    # customer_visit_plan_df = meeting_plan_fact.prepare_meetings_fact_data(quarter_selector, year_selector, region_selector_selected_list, meetings_data_selector)[6]
-    customer_visit_plan_filtered_df = customer_visit_plan_df.loc[customer_visit_plan_df['region_code'].isin(region_list_value)]
-    user_plan_df = customer_visit_plan_filtered_df.groupby(['user_id'],as_index=False)[['visit_plan']].sum()
+
+
+    user_plan_df = customer_data_df.groupby(['user_id'],as_index=False)[['visit_plan']].sum()
+
     fact_df = events_df_selected_by_quarter_filtered_by_regions.groupby(['user_id'],as_index=False)['qty'].sum()
 
     plan_fact_df = pd.merge(user_plan_df, fact_df, on='user_id', how='left')
@@ -344,9 +341,45 @@ def meeting_plan_fact(quarter_selector, year_selector, select_all_regions_button
                             style_cell={'textAlign': 'left'},
                         )
 
+    ############# Таблица с данными план-факт по клиентам ################
+    customer_plan_fact_df = functions_file.plan_fact_df_prep(events_df_selected_by_quarter_ready, meetings_data_selector)[1]
+
+    users_df = initial_values.initial_values_init(mode)[2]
+    customer_user_plan_fact_data = pd.merge(customer_plan_fact_df, users_df, on='user_id', how='left')
+
+    customer_df = initial_values.initial_values_init(mode)[1]
+    df_cust = customer_df.loc[:, ['customer_id', 'customer_name', 'region_code']]
+
+    customer_name_user_plan_fact_data = pd.merge(customer_user_plan_fact_data, df_cust, on='customer_id', how='left')
+    customer_name_user_plan_fact_data = customer_name_user_plan_fact_data.loc[customer_name_user_plan_fact_data['user_id'].isin(users_list_values)]
+
+    customer_plan_fact_table_data = customer_name_user_plan_fact_data.loc[:, ['customer_name', 'name', 'visit_plan', 'visit_fact', 'status']]
+    status_dict = {0: "Не выполнен", 1: "Выполнен"}
+    customer_plan_fact_table_data['status'] = customer_plan_fact_table_data['status'].map(status_dict)
+    customer_plan_fact_table_data.rename(columns={
+        'customer_name': 'Наименование клиента',
+        'name': 'Ответственный менеджер',
+        'visit_plan': 'План визитов',
+        'visit_fact': 'Факт визитов',
+        'status': 'Статус'
+    }, inplace=True)
+    customer_plan_fact_table = dash_table.DataTable(
+        # id='table',
+        columns=[{"name": i, "id": i} for i in customer_plan_fact_table_data.columns],
+        data=customer_plan_fact_table_data.to_dict('records'),
+        style_header={
+            # 'backgroundColor': 'white',
+            'fontWeight': 'bold'
+        },
+        style_data={
+            'whiteSpace': 'normal',
+            'height': 'auto',
+        },
+        style_cell={'textAlign': 'left'},
+    )
 
 
-    return region_list_value, region_list_options, users_list_values, users_list_options, fig, users_plan_fact_table, alert_upload
+    return region_list_value, region_list_options, users_list_values, users_list_options, fig, users_plan_fact_table, customer_plan_fact_table, alert_upload
 # обработчик кнопки выгрузки наружу файла "plan_template.xlsx"
 @app.callback(
     Output("download-meetings-xlsx", "data"),

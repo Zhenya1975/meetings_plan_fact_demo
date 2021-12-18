@@ -2,8 +2,8 @@ import datetime
 import pandas as pd
 import json
 
-# mode = 'actual'
-mode = 'demo'
+mode = 'actual'
+# mode = 'demo'
 
 def initial_values_init(mode):
     if mode == 'demo':

@@ -25,7 +25,7 @@ def tab_settings():
                             {'label': ' Все завершенные встречи', 'value': 'include_all_meetings'},
                             {'label': ' Только встречи, идущие в зачет погашения нормы визитов', 'value': 'include_plan_fact_meetings'},
                         ],
-                        value='include_plan_fact_meetings',
+                        value='include_all_meetings',
                         labelStyle=dict(display='block'),
                     ),
                     html.Hr(),

@@ -3,6 +3,7 @@ from calendar import monthrange
 import pandas as pd
 import initial_values
 import datetime
+import numpy as np
 
 
 def quarter_important_days(quarter_number, year):
@@ -46,7 +47,7 @@ def get_unique_users(df_selections, region_list_value, managers_from_checklist):
     # джойним users_unique_list с users_regions_df
 
     users_unique_list_with_regions = pd.merge(users_unique_list, users_regions_df, on='user_id', how='left')
-    print(users_unique_list_with_regions)
+
     user_list_cut_by_regions = []
     for index, row in users_unique_list_with_regions.iterrows():
         a = row['regions_list']
@@ -128,44 +129,60 @@ def plan_fact_df_prep(events_df_selected_by_quarter_ready, meetings_data_selecto
     # получаем данные по динамике выполнения плана
     customer_visit_plan = customer_visit_plan_df.loc[:, ['customer_id', 'visit_plan']]
     events_df_selected_by_quarter_ready_with_plan = pd.merge(events_df_selected_by_quarter_ready, customer_visit_plan, on='customer_id', how='left')
-    fact_result_list = []
-    user_customer_fact_dict = {}
+
+    # выкидываем строки со встречами, в которых нет клиентов
+    events_df_selected_by_quarter_ready_with_plan.dropna(subset=['customer_id'], inplace=True)
+    # меняем тип данных в int
+    events_df_selected_by_quarter_ready_with_plan = events_df_selected_by_quarter_ready_with_plan.astype(
+        {'user_id': int, 'event_id': int, "customer_id": int, 'visit_plan': int})
+
+    # Выкидываем строки, в которых план равен 0. Такие встречи не должны влиять на выполнение плана
+    events_df_selected_by_quarter_ready_with_plan = events_df_selected_by_quarter_ready_with_plan.loc[events_df_selected_by_quarter_ready_with_plan['visit_plan'] > 0]
+
+
+    # нужно посчитать агргированное значение по клиентам
+    result_df_list = []
+    # В дикт customer_user_visit_fact будем записывать накопленные значения сумм визитов по пользователю и клиенту
+    customer_user_visit_fact = {}
+    events_df_selected_by_quarter_ready_with_plan['customer_user_id'] = events_df_selected_by_quarter_ready_with_plan['customer_id'].astype(str) + '_' + events_df_selected_by_quarter_ready_with_plan['user_id'].astype(str)
+
     for index, row in events_df_selected_by_quarter_ready_with_plan.iterrows():
-        dict_temp = {}
-        dict_temp['event_id'] = row['event_id']
-        dict_temp['user_id'] = row['user_id']
-        dict_temp['close_date'] = row['close_date']
-        dict_temp['customer_id'] = row['customer_id']
-        dict_temp['region_code'] = row['region_code']
-        dict_temp['deal_id'] = row['deal_id']
-        dict_temp['description'] = row['description']
-        dict_temp['close_comment'] = row['close_comment']
-        dict_temp['qty'] = row['qty']
-        customer_id = row['customer_id']
-        customer_plan = row['visit_plan']
-        user_id = row['user_id']
-        user_customer_id = str(user_id) + '_' + str(customer_id)
-        dict_temp['user_customer_id'] = user_customer_id
-        if user_customer_id in user_customer_fact_dict and user_customer_fact_dict[user_customer_id] < customer_plan:
-            user_customer_fact_dict[user_customer_id] += 1
+        temp_dict = {}
+        event_id = row['event_id']
+        customer_user_id = row['customer_user_id']
+        if customer_user_id in customer_user_visit_fact:
+            customer_user_visit_fact[customer_user_id] += 1
         else:
-            user_customer_fact_dict[user_customer_id] = 1
-        dict_temp['visit_plan'] = row['visit_plan']
-        dict_temp['prev_fact'] = user_customer_fact_dict[user_customer_id] - 1
-        dict_temp['fact'] = user_customer_fact_dict[user_customer_id]
-        if user_customer_fact_dict[user_customer_id] >= row['visit_plan']:
-            dict_temp['plan_fact_status'] = 1
-        else:
-            dict_temp['plan_fact_status'] = 0
-        fact_result_list.append(dict_temp)
+            customer_user_visit_fact[customer_user_id] = 1
+        temp_dict['event_id'] = event_id
+        temp_dict['cum_value'] = customer_user_visit_fact[customer_user_id]
+        result_df_list.append(temp_dict)
+    cum_fact_df = pd.DataFrame(result_df_list)
 
-    events_plan_fact_df = pd.DataFrame(fact_result_list)
+    df = pd.merge(cum_fact_df, events_df_selected_by_quarter_ready_with_plan, on='event_id', how='left')
+
+
+    # plan_fact_cum_result = pd.merge(cum_fact_df, events_df_selected_by_quarter_ready_with_plan, how='left', on='event_id')
+
+    df['delta'] = df['visit_plan']-df['cum_value']
+    df['status'] = np.where(df['delta'] <=0, 1, 0)
+
     if meetings_data_selector == 'include_plan_fact_meetings':
-        # удаляем строки в которых предыдущий факт больше или равен плана. То есть уже норма выполнена
-        events_plan_fact_df = events_plan_fact_df.loc[
-            events_plan_fact_df['visit_plan'] > events_plan_fact_df['prev_fact']]
+         # удаляем строки в которых количество cum_value больше плана, то есть встречи сверх плана
+         df = df.loc[df['cum_value'] > df['visit_plan']]
 
-    return events_plan_fact_df
+
+
+    ###### Данные для таблицы
+
+    plan_fact_cum_result_groupped = df.groupby(['customer_id', 'user_id'], as_index=False).agg({'visit_plan': 'max', 'qty': 'sum' })
+    plan_fact_cum_result_groupped.rename(columns={'qty': 'visit_fact'}, inplace=True)
+
+    plan_fact_cum_result_groupped['delta'] = plan_fact_cum_result_groupped['visit_plan'] - plan_fact_cum_result_groupped['visit_fact']
+    plan_fact_cum_result_groupped['status'] = np.where(plan_fact_cum_result_groupped['delta'] <= 0, 1, 0)
+
+
+    return df, plan_fact_cum_result_groupped
 
 def events_demo_prepare(df):
     """перезапись events.df и подготовка данных для events_demo"""

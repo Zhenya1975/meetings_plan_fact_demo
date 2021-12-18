@@ -155,8 +155,24 @@ def tab_plan_fact():
                                         # className='custom-tab',
                                         # selected_className='custom-tab--selected',
                                         children=[dbc.Row([
-                                            dbc.Col(
+                                            dbc.Col(children=[
+                                                html.P(),
+                                                html.Div(
+                                                    dcc.Checklist(
+                                                        id='customer_plan_fact_table_filter',
+                                                        options=[{'label': ' План визитов выполнен  ', 'value': 1},
+                                                                 {'label': ' План визитов не выполнен  ', 'value': 0},
+
+                                                                 ],
+                                                        value=[0, 1],
+                                                        labelStyle=dict(display='inline')
+                                                    ),
+                                                ),
+
+                                                html.P(),
                                                 html.Div(id='customers_plan_fact_table'),
+                                            ],
+
                                             )])]),
 
                                     # tab_calendar_actions.calendar_actions(),

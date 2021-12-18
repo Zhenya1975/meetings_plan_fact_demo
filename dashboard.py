@@ -110,6 +110,8 @@ app.layout = dbc.Container(
    ],
 
     [
+
+        Input('customer_plan_fact_table_filter', 'value'),
         Input('quarter_selector', 'value'),
         Input('year_selector', 'value'),
         Input('select_all_regions_button_tab_plan_fact', 'n_clicks'),
@@ -123,7 +125,7 @@ app.layout = dbc.Container(
         Input('upload_meetings', 'contents')],
     [State('upload_meetings', 'filename')])
 
-def meeting_plan_fact(quarter_selector, year_selector, select_all_regions_button, release_all_regions_button, region_selector_selected_list, theme_selector, select_all_users_button, release_all_users_button, managers_from_checklist, meetings_data_selector, contents, filename):
+def meeting_plan_fact(customer_plan_fact_table_filter, quarter_selector, year_selector, select_all_regions_button, release_all_regions_button, region_selector_selected_list, theme_selector, select_all_users_button, release_all_users_button, managers_from_checklist, meetings_data_selector, contents, filename):
 
     changed_id = [p['prop_id'] for p in callback_context.triggered][0]
 
@@ -351,7 +353,7 @@ def meeting_plan_fact(quarter_selector, year_selector, select_all_regions_button
     df_cust = customer_df.loc[:, ['customer_id', 'customer_name', 'region_code']]
 
     customer_name_user_plan_fact_data = pd.merge(customer_user_plan_fact_data, df_cust, on='customer_id', how='left')
-    customer_name_user_plan_fact_data = customer_name_user_plan_fact_data.loc[customer_name_user_plan_fact_data['user_id'].isin(users_list_values)]
+    customer_name_user_plan_fact_data = customer_name_user_plan_fact_data.loc[customer_name_user_plan_fact_data['user_id'].isin(users_list_values) & customer_name_user_plan_fact_data['status'].isin(customer_plan_fact_table_filter)]
 
     customer_plan_fact_table_data = customer_name_user_plan_fact_data.loc[:, ['customer_name', 'name', 'visit_plan', 'visit_fact', 'status']]
     status_dict = {0: "Не выполнен", 1: "Выполнен"}

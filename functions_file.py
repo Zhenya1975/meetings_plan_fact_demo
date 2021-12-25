@@ -123,30 +123,33 @@ def regions_checklist_data(df):
     return region_checklist_data, region_list
 
 def plan_fact_df_prep(events_df_selected_by_quarter_ready, meetings_data_selector):
+    """список ивентов для построения кумулятивного графика и список клиентов/ивентов для таблицы План факт по клиентам"""
     # Cписок клиентов с планом посещений
     customer_visit_plan_df = initial_values.customers_visit_plan()
 
     # получаем данные по динамике выполнения плана
     customer_visit_plan = customer_visit_plan_df.loc[:, ['customer_id', 'visit_plan']]
-    events_df_selected_by_quarter_ready_with_plan = pd.merge(events_df_selected_by_quarter_ready, customer_visit_plan, on='customer_id', how='left')
+
 
     # выкидываем строки со встречами, в которых нет клиентов
-    events_df_selected_by_quarter_ready_with_plan.dropna(subset=['customer_id'], inplace=True)
+    events_df_selected_by_quarter_ready.dropna(subset=['customer_id'], inplace=True)
     # меняем тип данных в int
-    events_df_selected_by_quarter_ready_with_plan = events_df_selected_by_quarter_ready_with_plan.astype(
-        {'user_id': int, 'event_id': int, "customer_id": int, 'visit_plan': int})
+    events_df_selected_by_quarter_ready = events_df_selected_by_quarter_ready.astype({'user_id': int, 'event_id': int, "customer_id": int})
+    # для того чтобы можно было выкинуть встречи сверх плана нудно таблицу встреч объединить с таблицей клиентов.
+    events_customer_plan = pd.merge(events_df_selected_by_quarter_ready, customer_visit_plan, on='customer_id', how='left')
 
-    # Выкидываем строки, в которых план равен 0. Такие встречи не должны влиять на выполнение плана
-    events_df_selected_by_quarter_ready_with_plan = events_df_selected_by_quarter_ready_with_plan.loc[events_df_selected_by_quarter_ready_with_plan['visit_plan'] > 0]
+    # Если в настройках выбрано "Считать только встречи, идущие в зачет погашения нормы визитов", то выкидываем строки, в которых план равен 0. Такие встречи не должны влиять на выполнение плана
+    if meetings_data_selector == "include_plan_fact_meetings":
+         events_customer_plan = events_customer_plan.loc[events_customer_plan['visit_plan'] > 0]
 
-
-    # нужно посчитать агргированное значение по клиентам
+    # нужно посчитать агрегированное значение по клиентам
     result_df_list = []
     # В дикт customer_user_visit_fact будем записывать накопленные значения сумм визитов по пользователю и клиенту
     customer_user_visit_fact = {}
-    events_df_selected_by_quarter_ready_with_plan['customer_user_id'] = events_df_selected_by_quarter_ready_with_plan['customer_id'].astype(str) + '_' + events_df_selected_by_quarter_ready_with_plan['user_id'].astype(str)
+    events_customer_plan['customer_user_id'] = events_customer_plan['customer_id'].astype(str) + '_' + events_customer_plan['user_id'].astype(str)
 
-    for index, row in events_df_selected_by_quarter_ready_with_plan.iterrows():
+
+    for index, row in events_customer_plan.iterrows():
         temp_dict = {}
         event_id = row['event_id']
         customer_user_id = row['customer_user_id']
@@ -155,34 +158,60 @@ def plan_fact_df_prep(events_df_selected_by_quarter_ready, meetings_data_selecto
         else:
             customer_user_visit_fact[customer_user_id] = 1
         temp_dict['event_id'] = event_id
+        temp_dict['user_id'] = row['user_id']
+        temp_dict['plan_date'] = row['plan_date']
+        temp_dict['close_date'] = row['close_date']
+        temp_dict['customer_id'] = row['customer_id']
+        temp_dict['region_code'] = row['region_code']
+        temp_dict['qty'] = row['qty']
+
+        temp_dict['visit_plan'] = row['visit_plan']
         temp_dict['cum_value'] = customer_user_visit_fact[customer_user_id]
         result_df_list.append(temp_dict)
     cum_fact_df = pd.DataFrame(result_df_list)
 
-    df = pd.merge(cum_fact_df, events_df_selected_by_quarter_ready_with_plan, on='event_id', how='left')
 
+    cum_fact_df['delta'] = cum_fact_df['visit_plan'] - cum_fact_df['cum_value']
+    # cum_fact_df['status'] = np.where(cum_fact_df['delta'] <= 0 and cum_fact_df['visit_plan'] != 0, 1, 0)
+    def make_status_for_users_table(row):
+        if row['delta'] <= 0 and row['visit_plan'] !=0:
+            return 1
+        return 0
 
-    # plan_fact_cum_result = pd.merge(cum_fact_df, events_df_selected_by_quarter_ready_with_plan, how='left', on='event_id')
+    cum_fact_df['status'] = cum_fact_df.apply(lambda row: make_status_for_users_table(row), axis=1)
 
-    df['delta'] = df['visit_plan']-df['cum_value']
-    df['status'] = np.where(df['delta'] <=0, 1, 0)
+    # cum_fact_df['status'] = np.where(cum_fact_df['delta'], 1, 0)
 
     if meetings_data_selector == 'include_plan_fact_meetings':
          # удаляем строки в которых количество cum_value больше плана, то есть встречи сверх плана
-         df = df.loc[df['cum_value'] > df['visit_plan']]
+         cum_fact_df = cum_fact_df.loc[cum_fact_df['cum_value'] <= cum_fact_df['visit_plan']]
+
+
+    # из полученного датафрейма делаем группировку, в которой выбираем customer_id и максимальное значение
+    cum_fact_df_groupped = cum_fact_df.groupby(['customer_id'], as_index=False).agg({'cum_value': 'max'})
+
+    # объединяем таблицу клиентов с планом и таблицу со встречами с фактом
+    events_plan_fact_by_customers = pd.merge(customer_visit_plan_df, cum_fact_df_groupped,how='left', on='customer_id')
+    values = {"cum_value": 0}
+    events_plan_fact_by_customers = events_plan_fact_by_customers.copy()
+    events_plan_fact_by_customers.fillna(value=values, inplace=True)
+    events_plan_fact_by_customers = events_plan_fact_by_customers.astype({'cum_value': int})
+    events_plan_fact_by_customers['delta'] = events_plan_fact_by_customers['visit_plan'] - events_plan_fact_by_customers['cum_value']
+    # events_plan_fact_by_customers['status'] = np.where(events_plan_fact_by_customers['delta'] <= 0, 1, 0)
+
+    def make_status_for_customers_table(row):
+        if row['delta'] <= 0 and row['visit_plan'] !=0:
+            return 1
+        return 0
+
+    events_plan_fact_by_customers['status'] = events_plan_fact_by_customers.apply(lambda row: make_status_for_customers_table(row), axis=1)
 
 
 
-    ###### Данные для таблицы
-
-    plan_fact_cum_result_groupped = df.groupby(['customer_id', 'user_id'], as_index=False).agg({'visit_plan': 'max', 'qty': 'sum' })
-    plan_fact_cum_result_groupped.rename(columns={'qty': 'visit_fact'}, inplace=True)
-
-    plan_fact_cum_result_groupped['delta'] = plan_fact_cum_result_groupped['visit_plan'] - plan_fact_cum_result_groupped['visit_fact']
-    plan_fact_cum_result_groupped['status'] = np.where(plan_fact_cum_result_groupped['delta'] <= 0, 1, 0)
+    return cum_fact_df, events_plan_fact_by_customers
 
 
-    return df, plan_fact_cum_result_groupped
+
 
 def events_demo_prepare(df):
     """перезапись events.df и подготовка данных для events_demo"""

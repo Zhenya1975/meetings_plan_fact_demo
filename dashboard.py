@@ -164,7 +164,7 @@ def meeting_plan_fact(customer_plan_fact_table_filter, quarter_selector, year_se
                 # если файл не ексель, то пока просто ничего не делаем
         # если попытка загрузить не прошла по каким-то причинам, то пока ничего не далем. Выводим в принт
         except Exception as e:
-            print('при попытке загрузить excal файл возникло исключение', e)
+            print('при попытке загрузить excel файл возникло исключение', e)
             alert_upload = dbc.Alert(
                 "Не удалось загрузить файл!",
                 id="upload_failed",
@@ -237,7 +237,6 @@ def meeting_plan_fact(customer_plan_fact_table_filter, quarter_selector, year_se
         users_list_values = []
 
     # данные, обрезанные по датам начала и конца квартала
-
     data_selected_quarter = functions_file.plan_fact_df_prep(events_df_selected_by_quarter_ready, meetings_data_selector)[0]
 
     # фильтруем датафрейм по выбранным в чек-листе регионам и пользователям:
@@ -260,7 +259,6 @@ def meeting_plan_fact(customer_plan_fact_table_filter, quarter_selector, year_se
         graph_template = 'bootstrap'
     else:
         graph_template = 'plotly_dark'
-
 
     fig = go.Figure()
     fig.add_trace(go.Scatter(
@@ -301,15 +299,22 @@ def meeting_plan_fact(customer_plan_fact_table_filter, quarter_selector, year_se
     ############# Таблица с данными о выполнении плана сотрудниками ################
     # Имя пользователя. План. Факт. Статус выполнения плана
 
+    customer_plan_df = functions_file.plan_fact_df_prep(events_df_selected_by_quarter_ready, meetings_data_selector)[1]
+    events_fact_df = functions_file.plan_fact_df_prep(events_df_selected_by_quarter_ready, meetings_data_selector)[0]
 
-    user_plan_df = customer_data_df.groupby(['user_id'],as_index=False)[['visit_plan']].sum()
+    customer_plan_df = customer_plan_df.loc[customer_plan_df['user_id'].isin(users_list_values) & customer_plan_df['region_code'].isin(region_list_value)]
+    events_fact_df = events_fact_df.loc[events_fact_df['user_id'].isin(users_list_values) & events_fact_df['region_code'].isin(region_list_value)]
 
-    fact_df = events_df_selected_by_quarter_filtered_by_regions.groupby(['user_id'],as_index=False)['qty'].sum()
+
+
+    user_plan_df = customer_plan_df.groupby(['user_id'],as_index=False)[['visit_plan']].sum()
+
+    fact_df = events_fact_df.groupby(['user_id'],as_index=False)['qty'].sum()
 
     plan_fact_df = pd.merge(user_plan_df, fact_df, on='user_id', how='left')
     plan_fact_df.fillna(0, inplace=True)
     plan_fact_df = plan_fact_df.astype({"qty": int})
-    plan_fact_df = plan_fact_df.loc[plan_fact_df['user_id'].isin(users_list_values)]
+
     plan_fact_df.rename(columns={'qty': 'visit_fact'}, inplace=True)
     plan_fact_df['delta'] = plan_fact_df['visit_plan'] - plan_fact_df['visit_fact']
     plan_fact_df['status'] = 0
@@ -319,6 +324,8 @@ def meeting_plan_fact(customer_plan_fact_table_filter, quarter_selector, year_se
         else:
             row['status'] = 0
     mode = initial_values.mode
+
+
     users_df = initial_values.initial_values_init(mode)[2]
     users_plan_fact_table_data = pd.merge(plan_fact_df, users_df, on='user_id', how='left')
     users_plan_fact_table_data['Менеджер'] = users_plan_fact_table_data['name'] + ', ' + users_plan_fact_table_data['position']
@@ -344,25 +351,21 @@ def meeting_plan_fact(customer_plan_fact_table_filter, quarter_selector, year_se
                         )
 
     ############# Таблица с данными план-факт по клиентам ################
-    customer_plan_fact_df = functions_file.plan_fact_df_prep(events_df_selected_by_quarter_ready, meetings_data_selector)[1]
+    # План - это то, что приходит от таблицы с клиентами
 
     users_df = initial_values.initial_values_init(mode)[2]
-    customer_user_plan_fact_data = pd.merge(customer_plan_fact_df, users_df, on='user_id', how='left')
+    customer_user_plan_fact_data = pd.merge(customer_plan_df, users_df, on='user_id', how='left')
 
-    customer_df = initial_values.initial_values_init(mode)[1]
-    df_cust = customer_df.loc[:, ['customer_id', 'customer_name', 'region_code']]
+    customer_name_user_plan_fact_data = customer_user_plan_fact_data.loc[customer_user_plan_fact_data['user_id'].isin(users_list_values) & customer_user_plan_fact_data['region_code'].isin(region_list_value)  & customer_user_plan_fact_data['status'].isin(customer_plan_fact_table_filter)]
 
-    customer_name_user_plan_fact_data = pd.merge(customer_user_plan_fact_data, df_cust, on='customer_id', how='left')
-    customer_name_user_plan_fact_data = customer_name_user_plan_fact_data.loc[customer_name_user_plan_fact_data['user_id'].isin(users_list_values) & customer_name_user_plan_fact_data['status'].isin(customer_plan_fact_table_filter)]
-
-    customer_plan_fact_table_data = customer_name_user_plan_fact_data.loc[:, ['customer_name', 'name', 'visit_plan', 'visit_fact', 'status']]
+    customer_plan_fact_table_data = customer_name_user_plan_fact_data.loc[:, ['customer_name', 'name', 'visit_plan', 'cum_value', 'status']]
     status_dict = {0: "Не выполнен", 1: "Выполнен"}
     customer_plan_fact_table_data['status'] = customer_plan_fact_table_data['status'].map(status_dict)
     customer_plan_fact_table_data.rename(columns={
         'customer_name': 'Наименование клиента',
         'name': 'Ответственный менеджер',
         'visit_plan': 'План визитов',
-        'visit_fact': 'Факт визитов',
+        'cum_value': 'Факт визитов',
         'status': 'Статус'
     }, inplace=True)
     customer_plan_fact_table = dash_table.DataTable(

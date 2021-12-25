@@ -215,7 +215,7 @@ def plan_fact_df_prep(events_df_selected_by_quarter_ready, meetings_data_selecto
 
 def events_demo_prepare(df):
     """перезапись events.df и подготовка данных для events_demo"""
-    df.to_csv('Data/events.csv')
+
     # подготовка demo_events - перезапись комментов
     demo_comments = pd.read_csv('Data/communications.csv')
     result_list = []

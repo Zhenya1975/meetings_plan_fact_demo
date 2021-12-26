@@ -25,6 +25,7 @@ import tab_plan_fact
 import functions_file
 import tab_settings
 import initial_values
+import tab_calendar_actions
 
 mode = initial_values.mode
 initial_values.initial_values_init(mode)
@@ -82,7 +83,7 @@ app.layout = dbc.Container(
                             # className='custom-tabs-container',
                             children=[
                                 tab_plan_fact.tab_plan_fact(),
-                                # tab_calendar_actions.calendar_actions(),
+                                tab_calendar_actions.calendar_actions(),
                                 tab_settings.tab_settings(),
                                 # tab2(),
                                 # tab3(),
@@ -126,7 +127,7 @@ app.layout = dbc.Container(
     [State('upload_meetings', 'filename')])
 
 def meeting_plan_fact(customer_plan_fact_table_filter, quarter_selector, year_selector, select_all_regions_button, release_all_regions_button, region_selector_selected_list, theme_selector, select_all_users_button, release_all_users_button, managers_from_checklist, meetings_data_selector, contents, filename):
-
+    config_dict = initial_values.config_dict
     changed_id = [p['prop_id'] for p in callback_context.triggered][0]
 
     closed_events = initial_values.closed_events

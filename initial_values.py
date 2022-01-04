@@ -39,7 +39,7 @@ def get_curent_quarter_and_year():
     current_date = datetime.datetime.now()
     """текущая дата в формате datetime"""
     current_quarter = current_date.month//4 + 1
-    print(current_quarter)
+
     """номер текущего квартала"""
 
     current_year = current_date.year

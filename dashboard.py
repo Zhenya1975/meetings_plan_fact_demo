@@ -177,83 +177,206 @@ def meeting_plan_fact(customer_plan_fact_table_filter, quarter_selector, year_se
     first_day_of_selection = functions_file.quarter_days(quarter_selector, year_selector)[0]
     last_day_of_selection = functions_file.quarter_days(quarter_selector, year_selector)[1]
     events_df_selected_by_quarter = functions_file.cut_df_by_dates_interval(closed_events, 'close_date', first_day_of_selection, last_day_of_selection)
-
+    # print('размер датафрема closed events ', len(closed_events))
+    # print('размер датафрема closed events в текущем квартале', len(events_df_selected_by_quarter))
     # датафрем по закрытым ивентам в выбранный квартал подготовлен.
     # Выбираем из него поля и эту заготовку отправляем на работу по построению графиков
-    events_df_selected_by_quarter_ready = events_df_selected_by_quarter.loc[:,
-                                          ['event_id', 'user_id', 'user_code', 'plan_date', 'close_date', 'customer_id',
-                                           'region_name', 'region_code', 'deal_id', 'description', 'close_comment',
-                                           'qty']]
-    events_df_selected_by_quarter_ready = events_df_selected_by_quarter_ready.reset_index(drop=True)
-
-    # получаем данные для чек-боксов регионов
-    region_list_options = functions_file.regions_checklist_data(events_df_selected_by_quarter_ready)[0]
-    region_list_value_full = functions_file.regions_checklist_data(events_df_selected_by_quarter_ready)[1]
-
-    # Обработчик кнопок Снять / Выбрать в блоке Регионы
-    id_select_all_regions_button = "select_all_regions_button_tab_plan_fact"
-    id_release_all_regions_button = "release_all_regions_button_tab_plan_fact"
-
-    if region_selector_selected_list:
-        region_list_value = region_selector_selected_list
-    else:
-        region_list_value = region_list_value_full
-
-    id_checklist_region = 'region_selector_checklist_tab_plan_fact'
-    # если кликнули по чек-листу, то берем значение из выбранного списка
-    if id_checklist_region in changed_id:
-        region_list_value = region_selector_selected_list
-
-    # при клике на кнопку Выбрать все - выбираем все и наоборот
-    if id_select_all_regions_button in changed_id:
-        region_list_value = region_list_value_full
-    elif id_release_all_regions_button in changed_id:
-        region_list_value = []
-
-
-
-
-    ################# блок получения данных для чек-листа пользователей ################
+    quarter_dates_df = functions_file.quarter_all_dates_prepare(first_day_of_selection, last_day_of_selection)
     # Cписок клиентов с планом посещений
     customer_visit_plan_df = initial_values.customers_visit_plan()
+    # для построения графика присваиваем значение по умолчанию для ситуации отсутствия данных в выборке по завершеным встречам
+    x = quarter_dates_df['close_date']
+    y = quarter_dates_df['zero_qty']
+    fact_at_current_date = 0
+    region_list_options = []
+    users_list_options = []
+    region_list_value = []
+    users_list_values = []
+    users_plan_fact_table = html.Div()
+    customer_plan_fact_table = html.Div()
 
-    users_data = functions_file.get_unique_users(customer_visit_plan_df, region_list_value, managers_from_checklist)
+    plan_value = customer_visit_plan_df['visit_plan'].sum()
+    annotation_text = "    План посещений: " + str(plan_value) + " визитов"
 
-    users_list_options = users_data[0]
-    users_list_values = users_data[1]
+    start_quarter_date = functions_file.quarter_important_days(quarter_selector, year_selector)[0]
+    finish_quarter_date = functions_file.quarter_important_days(quarter_selector, year_selector)[1]
 
-    id_checklist_users = 'managers_selector_checklist_tab_plan_fact'
-    if id_checklist_users in changed_id:
-        users_list_values = managers_from_checklist
+    start_date = first_day_of_selection
+    finish_date = last_day_of_selection
+    # если данные в выборке есть, то тогда собираем данные и строим график
+    if len(events_df_selected_by_quarter) >0:
+        events_df_selected_by_quarter_ready = events_df_selected_by_quarter.loc[:,
+                                              ['event_id', 'user_id', 'user_code', 'plan_date', 'close_date', 'customer_id',
+                                               'region_name', 'region_code', 'deal_id', 'description', 'close_comment',
+                                               'qty']]
+        events_df_selected_by_quarter_ready = events_df_selected_by_quarter_ready.reset_index(drop=True)
 
-    # Обработчик кнопок Снять / Выбрать в блоке Пользователи
-    id_select_all_users_button = "select_all_managers_button_tab_plan_fact"
-    id_release_all_users_button = "release_all_managers_button_tab_plan_fact"
+        # получаем данные для чек-боксов регионов
+        region_list_options = functions_file.regions_checklist_data(events_df_selected_by_quarter_ready)[0]
+        region_list_value_full = functions_file.regions_checklist_data(events_df_selected_by_quarter_ready)[1]
 
-    if id_select_all_users_button in changed_id:
+        # Обработчик кнопок Снять / Выбрать в блоке Регионы
+        id_select_all_regions_button = "select_all_regions_button_tab_plan_fact"
+        id_release_all_regions_button = "release_all_regions_button_tab_plan_fact"
+
+        if region_selector_selected_list:
+            region_list_value = region_selector_selected_list
+        else:
+            region_list_value = region_list_value_full
+
+        id_checklist_region = 'region_selector_checklist_tab_plan_fact'
+        # если кликнули по чек-листу, то берем значение из выбранного списка
+        if id_checklist_region in changed_id:
+            region_list_value = region_selector_selected_list
+
+        # при клике на кнопку Выбрать все - выбираем все и наоборот
+        if id_select_all_regions_button in changed_id:
+            region_list_value = region_list_value_full
+        elif id_release_all_regions_button in changed_id:
+            region_list_value = []
+
+
+        ################# блок получения данных для чек-листа пользователей ################
+
+        users_data = functions_file.get_unique_users(customer_visit_plan_df, region_list_value, managers_from_checklist)
+
         users_list_options = users_data[0]
         users_list_values = users_data[1]
-    elif id_release_all_users_button in changed_id:
-        users_list_options = users_data[0]
-        users_list_values = []
 
-    # данные, обрезанные по датам начала и конца квартала
-    data_selected_quarter = functions_file.plan_fact_df_prep(events_df_selected_by_quarter_ready, meetings_data_selector)[0]
+        id_checklist_users = 'managers_selector_checklist_tab_plan_fact'
+        if id_checklist_users in changed_id:
+            users_list_values = managers_from_checklist
 
-    # фильтруем датафрейм по выбранным в чек-листе регионам и пользователям:
-    events_df_selected_by_quarter_filtered_by_regions = data_selected_quarter.loc[data_selected_quarter['region_code'].isin(region_list_value) & data_selected_quarter['user_id'].isin(users_list_values)]
+        # Обработчик кнопок Снять / Выбрать в блоке Пользователи
+        id_select_all_users_button = "select_all_managers_button_tab_plan_fact"
+        id_release_all_users_button = "release_all_managers_button_tab_plan_fact"
 
-    ###### готовим данные для построения графика ########
-    meetings_fact_graph_data = events_df_selected_by_quarter_filtered_by_regions.groupby('close_date', as_index=False)["qty"].sum()
-    quarter_dates_df = functions_file.quarter_all_dates_prepare(first_day_of_selection, last_day_of_selection)
-    # quarter_dates_df = meeting_plan_fact.prepare_meetings_fact_data(quarter_selector, year_selector, region_selector_selected_list, meetings_data_selector)[3]
-    df_meetings_fact_graph = pd.merge(quarter_dates_df, meetings_fact_graph_data, on='close_date', how='left')
-    df_meetings_fact_graph.fillna(0, inplace=True)
-    df_meetings_fact_graph.loc[:, 'cumsum'] = df_meetings_fact_graph['qty'].cumsum()
-    df_meetings_fact_graph = df_meetings_fact_graph.astype({"cumsum": int})
-    x = df_meetings_fact_graph['close_date']
-    y = df_meetings_fact_graph['cumsum']
-    fact_at_current_date = df_meetings_fact_graph.iloc[-1]['cumsum']
+        if id_select_all_users_button in changed_id:
+            users_list_options = users_data[0]
+            users_list_values = users_data[1]
+        elif id_release_all_users_button in changed_id:
+            users_list_options = users_data[0]
+            users_list_values = []
+
+        # данные, обрезанные по датам начала и конца квартала
+        data_selected_quarter = functions_file.plan_fact_df_prep(events_df_selected_by_quarter_ready, meetings_data_selector)[0]
+
+        # фильтруем датафрейм по выбранным в чек-листе регионам и пользователям:
+        events_df_selected_by_quarter_filtered_by_regions = data_selected_quarter.loc[data_selected_quarter['region_code'].isin(region_list_value) & data_selected_quarter['user_id'].isin(users_list_values)]
+
+        ###### готовим данные для построения графика ########
+        meetings_fact_graph_data = events_df_selected_by_quarter_filtered_by_regions.groupby('close_date', as_index=False)["qty"].sum()
+
+        # quarter_dates_df = meeting_plan_fact.prepare_meetings_fact_data(quarter_selector, year_selector, region_selector_selected_list, meetings_data_selector)[3]
+        df_meetings_fact_graph = pd.merge(quarter_dates_df, meetings_fact_graph_data, on='close_date', how='left')
+        df_meetings_fact_graph.fillna(0, inplace=True)
+        df_meetings_fact_graph.loc[:, 'cumsum'] = df_meetings_fact_graph['qty'].cumsum()
+        df_meetings_fact_graph = df_meetings_fact_graph.astype({"cumsum": int})
+        x = df_meetings_fact_graph['close_date']
+        y = df_meetings_fact_graph['cumsum']
+        fact_at_current_date = df_meetings_fact_graph.iloc[-1]['cumsum']
+
+        customer_data_df = customer_visit_plan_df
+        customer_data_df = customer_data_df.loc[
+            customer_data_df['region_code'].isin(region_list_value) & customer_data_df['user_id'].isin(
+                users_list_values)]
+
+        plan_value = customer_data_df['visit_plan'].sum()
+        annotation_text = "    План посещений: " + str(plan_value) + " визитов"
+        ############# Таблица с данными о выполнении плана сотрудниками ################
+        # Имя пользователя. План. Факт. Статус выполнения плана
+
+        customer_plan_df = functions_file.plan_fact_df_prep(events_df_selected_by_quarter_ready, meetings_data_selector)[1]
+        events_fact_df = functions_file.plan_fact_df_prep(events_df_selected_by_quarter_ready, meetings_data_selector)[
+            0]
+
+        customer_plan_df = customer_plan_df.loc[
+            customer_plan_df['user_id'].isin(users_list_values) & customer_plan_df['region_code'].isin(
+                region_list_value)]
+        events_fact_df = events_fact_df.loc[
+            events_fact_df['user_id'].isin(users_list_values) & events_fact_df['region_code'].isin(region_list_value)]
+
+        user_plan_df = customer_plan_df.groupby(['user_id'], as_index=False)[['visit_plan']].sum()
+
+        fact_df = events_fact_df.groupby(['user_id'], as_index=False)['qty'].sum()
+
+        plan_fact_df = pd.merge(user_plan_df, fact_df, on='user_id', how='left')
+        plan_fact_df.fillna(0, inplace=True)
+        plan_fact_df = plan_fact_df.astype({"qty": int})
+
+        plan_fact_df.rename(columns={'qty': 'visit_fact'}, inplace=True)
+        plan_fact_df['delta'] = plan_fact_df['visit_plan'] - plan_fact_df['visit_fact']
+        plan_fact_df['status'] = 0
+        for index, row in plan_fact_df.iterrows():
+            if row['delta'] < 0:
+                row['status'] = 1
+            else:
+                row['status'] = 0
+        mode = initial_values.mode
+
+        users_df = initial_values.initial_values_init(mode)[2]
+        users_plan_fact_table_data = pd.merge(plan_fact_df, users_df, on='user_id', how='left')
+        users_plan_fact_table_data['Менеджер'] = users_plan_fact_table_data['name'] + ', ' + users_plan_fact_table_data[
+            'position']
+        users_plan_fact_table_df = users_plan_fact_table_data.loc[:, ['Менеджер', 'visit_plan', 'visit_fact', 'status']]
+        status_dict = {0: "Не выполнен", 1: "Выполнен"}
+        users_plan_fact_table_df['status'] = users_plan_fact_table_df['status'].map(status_dict)
+        users_plan_fact_table_df.rename(
+            columns={'visit_plan': 'План визитов', 'visit_fact': 'Факт визитов', 'status': 'Статус выполнения плана'},
+            inplace=True)
+
+        users_plan_fact_table = dash_table.DataTable(
+            # id='table',
+            columns=[{"name": i, "id": i} for i in users_plan_fact_table_df.columns],
+            data=users_plan_fact_table_df.to_dict('records'),
+            style_header={
+                # 'backgroundColor': 'white',
+                'fontWeight': 'bold'
+            },
+            style_data={
+                'whiteSpace': 'normal',
+                'height': 'auto',
+            },
+            style_cell={'textAlign': 'left'},
+        )
+
+        ############# Таблица с данными план-факт по клиентам ################
+        # План - это то, что приходит от таблицы с клиентами
+
+        users_df = initial_values.initial_values_init(mode)[2]
+        customer_user_plan_fact_data = pd.merge(customer_plan_df, users_df, on='user_id', how='left')
+
+        customer_name_user_plan_fact_data = customer_user_plan_fact_data.loc[
+            customer_user_plan_fact_data['user_id'].isin(users_list_values) & customer_user_plan_fact_data[
+                'region_code'].isin(region_list_value) & customer_user_plan_fact_data['status'].isin(
+                customer_plan_fact_table_filter)]
+
+        customer_plan_fact_table_data = customer_name_user_plan_fact_data.loc[:,
+                                        ['customer_name', 'name', 'visit_plan', 'cum_value', 'status']]
+        status_dict = {0: "Не выполнен", 1: "Выполнен"}
+        customer_plan_fact_table_data['status'] = customer_plan_fact_table_data['status'].map(status_dict)
+        customer_plan_fact_table_data.rename(columns={
+            'customer_name': 'Наименование клиента',
+            'name': 'Ответственный менеджер',
+            'visit_plan': 'План визитов',
+            'cum_value': 'Факт визитов',
+            'status': 'Статус'
+        }, inplace=True)
+        customer_plan_fact_table = dash_table.DataTable(
+            # id='table',
+            columns=[{"name": i, "id": i} for i in customer_plan_fact_table_data.columns],
+            data=customer_plan_fact_table_data.to_dict('records'),
+            style_header={
+                # 'backgroundColor': 'white',
+                'fontWeight': 'bold'
+            },
+            style_data={
+                'whiteSpace': 'normal',
+                'height': 'auto',
+            },
+            style_cell={'textAlign': 'left'},
+        )
+
     ########### ГРАФИК ФАКТ ВСТРЕЧ #######################
 
     if theme_selector:
@@ -268,19 +391,6 @@ def meeting_plan_fact(customer_plan_fact_table_filter, quarter_selector, year_se
         fill='tozeroy',
         name='Завершенные встречи, кол-во',
     ))
-
-    start_quarter_date = functions_file.quarter_important_days(quarter_selector, year_selector)[0]
-    finish_quarter_date = functions_file.quarter_important_days(quarter_selector, year_selector)[1]
-    # start_date = meeting_plan_fact.prepare_meetings_fact_data(quarter_selector, year_selector, region_selector_selected_list, meetings_data_selector)[4].strftime("%d.%m.%Y")
-    start_date = first_day_of_selection
-    # finish_date = meeting_plan_fact.prepare_meetings_fact_data(quarter_selector, year_selector, region_selector_selected_list, meetings_data_selector)[5].strftime("%d.%m.%Y")
-    finish_date = last_day_of_selection
-    # customer_data_df = meeting_plan_fact.prepare_meetings_fact_data(quarter_selector, year_selector, region_selector_selected_list, meetings_data_selector)[6]
-    customer_data_df = customer_visit_plan_df
-    customer_data_df = customer_data_df.loc[customer_data_df['region_code'].isin(region_list_value) & customer_data_df['user_id'].isin(users_list_values)]
-
-    plan_value = customer_data_df['visit_plan'].sum()
-    annotation_text = "    План посещений: " + str(plan_value) + " визитов"
 
 
     fig.add_hline(y=plan_value, line_width=3, line_color="red", annotation_text=annotation_text,
@@ -297,92 +407,7 @@ def meeting_plan_fact(customer_plan_fact_table_filter, quarter_selector, year_se
         title='Завершено: {}<br><sup>c {} по {}</sup> '.format(fact_at_current_date, start_date, finish_date),
     )
 
-    ############# Таблица с данными о выполнении плана сотрудниками ################
-    # Имя пользователя. План. Факт. Статус выполнения плана
 
-    customer_plan_df = functions_file.plan_fact_df_prep(events_df_selected_by_quarter_ready, meetings_data_selector)[1]
-    events_fact_df = functions_file.plan_fact_df_prep(events_df_selected_by_quarter_ready, meetings_data_selector)[0]
-
-    customer_plan_df = customer_plan_df.loc[customer_plan_df['user_id'].isin(users_list_values) & customer_plan_df['region_code'].isin(region_list_value)]
-    events_fact_df = events_fact_df.loc[events_fact_df['user_id'].isin(users_list_values) & events_fact_df['region_code'].isin(region_list_value)]
-
-
-
-    user_plan_df = customer_plan_df.groupby(['user_id'],as_index=False)[['visit_plan']].sum()
-
-    fact_df = events_fact_df.groupby(['user_id'],as_index=False)['qty'].sum()
-
-    plan_fact_df = pd.merge(user_plan_df, fact_df, on='user_id', how='left')
-    plan_fact_df.fillna(0, inplace=True)
-    plan_fact_df = plan_fact_df.astype({"qty": int})
-
-    plan_fact_df.rename(columns={'qty': 'visit_fact'}, inplace=True)
-    plan_fact_df['delta'] = plan_fact_df['visit_plan'] - plan_fact_df['visit_fact']
-    plan_fact_df['status'] = 0
-    for index, row in plan_fact_df.iterrows():
-        if row['delta'] < 0:
-            row['status'] = 1
-        else:
-            row['status'] = 0
-    mode = initial_values.mode
-
-
-    users_df = initial_values.initial_values_init(mode)[2]
-    users_plan_fact_table_data = pd.merge(plan_fact_df, users_df, on='user_id', how='left')
-    users_plan_fact_table_data['Менеджер'] = users_plan_fact_table_data['name'] + ', ' + users_plan_fact_table_data['position']
-    users_plan_fact_table_df = users_plan_fact_table_data.loc[:, ['Менеджер', 'visit_plan', 'visit_fact', 'status']]
-    status_dict = {0: "Не выполнен", 1: "Выполнен"}
-    users_plan_fact_table_df['status'] = users_plan_fact_table_df['status'].map(status_dict)
-    users_plan_fact_table_df.rename(columns={'visit_plan': 'План визитов', 'visit_fact': 'Факт визитов', 'status': 'Статус выполнения плана'}, inplace=True)
-
-
-    users_plan_fact_table = dash_table.DataTable(
-                            # id='table',
-                            columns=[{"name": i, "id": i} for i in users_plan_fact_table_df.columns],
-                            data=users_plan_fact_table_df.to_dict('records'),
-                            style_header={
-                                # 'backgroundColor': 'white',
-                                'fontWeight': 'bold'
-                            },
-                            style_data={
-                                'whiteSpace': 'normal',
-                                'height': 'auto',
-                            },
-                            style_cell={'textAlign': 'left'},
-                        )
-
-    ############# Таблица с данными план-факт по клиентам ################
-    # План - это то, что приходит от таблицы с клиентами
-
-    users_df = initial_values.initial_values_init(mode)[2]
-    customer_user_plan_fact_data = pd.merge(customer_plan_df, users_df, on='user_id', how='left')
-
-    customer_name_user_plan_fact_data = customer_user_plan_fact_data.loc[customer_user_plan_fact_data['user_id'].isin(users_list_values) & customer_user_plan_fact_data['region_code'].isin(region_list_value)  & customer_user_plan_fact_data['status'].isin(customer_plan_fact_table_filter)]
-
-    customer_plan_fact_table_data = customer_name_user_plan_fact_data.loc[:, ['customer_name', 'name', 'visit_plan', 'cum_value', 'status']]
-    status_dict = {0: "Не выполнен", 1: "Выполнен"}
-    customer_plan_fact_table_data['status'] = customer_plan_fact_table_data['status'].map(status_dict)
-    customer_plan_fact_table_data.rename(columns={
-        'customer_name': 'Наименование клиента',
-        'name': 'Ответственный менеджер',
-        'visit_plan': 'План визитов',
-        'cum_value': 'Факт визитов',
-        'status': 'Статус'
-    }, inplace=True)
-    customer_plan_fact_table = dash_table.DataTable(
-        # id='table',
-        columns=[{"name": i, "id": i} for i in customer_plan_fact_table_data.columns],
-        data=customer_plan_fact_table_data.to_dict('records'),
-        style_header={
-            # 'backgroundColor': 'white',
-            'fontWeight': 'bold'
-        },
-        style_data={
-            'whiteSpace': 'normal',
-            'height': 'auto',
-        },
-        style_cell={'textAlign': 'left'},
-    )
 
 
     return region_list_value, region_list_options, users_list_values, users_list_options, fig, users_plan_fact_table, customer_plan_fact_table, alert_upload

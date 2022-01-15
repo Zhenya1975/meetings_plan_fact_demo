@@ -51,8 +51,6 @@ templates = [
 
 load_figure_template(templates)
 
-
-
 dbc_css = (
     "https://cdn.jsdelivr.net/gh/AnnMarieW/dash-bootstrap-templates@V1.0.1/dbc.min.css"
 )
@@ -68,16 +66,16 @@ app.layout = dbc.Container(
             dbc.Col(
                 [
                     html.H4("ОТЧЕТЫ", className="bg-primary text-white p-4 mb-2"),
-                    ThemeSwitchAIO(aio_id="theme", themes=[url_theme1, url_theme2],),
+                    ThemeSwitchAIO(aio_id="theme", themes=[url_theme1, url_theme2], ),
 
                     html.Div([
                         dcc.Tabs(
                             id="tabs-all",
                             style={
-                                    # 'width': '50%',
-                                    # 'font-size': '200%',
-                                    #'height':'5vh'
-                                },
+                                # 'width': '50%',
+                                # 'font-size': '200%',
+                                # 'height':'5vh'
+                            },
                             value='tab_plan_fact',
                             # parent_className='custom-tabs',
                             # className='custom-tabs-container',
@@ -99,6 +97,7 @@ app.layout = dbc.Container(
     fluid=True,
 )
 
+
 @app.callback([
     Output("region_selector_checklist_tab_plan_fact", "value"),
     Output("region_selector_checklist_tab_plan_fact", "options"),
@@ -108,7 +107,7 @@ app.layout = dbc.Container(
     Output('users_plan_fact_table', 'children'),
     Output('customers_plan_fact_table', 'children'),
     Output('alert_upload', 'children'),
-   ],
+],
 
     [
 
@@ -128,8 +127,10 @@ app.layout = dbc.Container(
     ],
     [State('upload_meetings', 'filename'),
      ])
-
-def meeting_plan_fact(customer_plan_fact_table_filter, quarter_selector, year_selector, select_all_regions_button, release_all_regions_button, region_selector_selected_list, theme_selector, select_all_users_button, release_all_users_button, managers_from_checklist, meetings_data_selector, contents, filename):
+def meeting_plan_fact(customer_plan_fact_table_filter, quarter_selector, year_selector, select_all_regions_button,
+                      release_all_regions_button, region_selector_selected_list, theme_selector,
+                      select_all_users_button, release_all_users_button, managers_from_checklist,
+                      meetings_data_selector, contents, filename):
     config_dict = initial_values.config_dict
     changed_id = [p['prop_id'] for p in callback_context.triggered][0]
 
@@ -163,7 +164,7 @@ def meeting_plan_fact(customer_plan_fact_table_filter, quarter_selector, year_se
                     "Файл успешно загружен!",
                     id="upload_success",
                     duration=4000,
-                    color="success",)
+                    color="success", )
             elif 'csv' in filename and 'companies_' in filename:
                 rb_companies_df = pd.read_csv(io.StringIO(decoded.decode('utf-8')))
                 rb_companies_df.to_csv('data/rb_companies_df.csv')
@@ -171,7 +172,7 @@ def meeting_plan_fact(customer_plan_fact_table_filter, quarter_selector, year_se
                     "Файл успешно загружен!",
                     id="upload_success",
                     duration=4000,
-                    color="success",)
+                    color="success", )
             else:
                 alert_upload = dbc.Alert(
                     "Формат загруженного файла - не '.xlsx'!",
@@ -193,13 +194,11 @@ def meeting_plan_fact(customer_plan_fact_table_filter, quarter_selector, year_se
             ),
     ##############################################################################
 
-
-
-
-
     first_day_of_selection = functions_file.quarter_days(quarter_selector, year_selector)[0]
     last_day_of_selection = functions_file.quarter_days(quarter_selector, year_selector)[1]
-    events_df_selected_by_quarter = functions_file.cut_df_by_dates_interval(closed_events, 'close_date', first_day_of_selection, last_day_of_selection)
+    events_df_selected_by_quarter = functions_file.cut_df_by_dates_interval(closed_events, 'close_date',
+                                                                            first_day_of_selection,
+                                                                            last_day_of_selection)
     # print('размер датафрема closed events ', len(closed_events))
     # print('размер датафрема closed events в текущем квартале', len(events_df_selected_by_quarter))
     # датафрем по закрытым ивентам в выбранный квартал подготовлен.
@@ -227,9 +226,10 @@ def meeting_plan_fact(customer_plan_fact_table_filter, quarter_selector, year_se
     start_date = first_day_of_selection
     finish_date = last_day_of_selection
     # если данные в выборке есть, то тогда собираем данные и строим график
-    if len(events_df_selected_by_quarter) >0:
+    if len(events_df_selected_by_quarter) > 0:
         events_df_selected_by_quarter_ready = events_df_selected_by_quarter.loc[:,
-                                              ['event_id', 'user_id', 'user_code', 'plan_date', 'close_date', 'customer_id',
+                                              ['event_id', 'user_id', 'user_code', 'plan_date', 'close_date',
+                                               'customer_id',
                                                'region_name', 'region_code', 'deal_id', 'description', 'close_comment',
                                                'qty']]
         events_df_selected_by_quarter_ready = events_df_selected_by_quarter_ready.reset_index(drop=True)
@@ -258,7 +258,6 @@ def meeting_plan_fact(customer_plan_fact_table_filter, quarter_selector, year_se
         elif id_release_all_regions_button in changed_id:
             region_list_value = []
 
-
         ################# блок получения данных для чек-листа пользователей ################
 
         users_data = functions_file.get_unique_users(customer_visit_plan_df, region_list_value, managers_from_checklist)
@@ -282,13 +281,17 @@ def meeting_plan_fact(customer_plan_fact_table_filter, quarter_selector, year_se
             users_list_values = []
 
         # данные, обрезанные по датам начала и конца квартала
-        data_selected_quarter = functions_file.plan_fact_df_prep(events_df_selected_by_quarter_ready, meetings_data_selector)[0]
+        data_selected_quarter = \
+        functions_file.plan_fact_df_prep(events_df_selected_by_quarter_ready, meetings_data_selector)[0]
 
         # фильтруем датафрейм по выбранным в чек-листе регионам и пользователям:
-        events_df_selected_by_quarter_filtered_by_regions = data_selected_quarter.loc[data_selected_quarter['region_code'].isin(region_list_value) & data_selected_quarter['user_id'].isin(users_list_values)]
+        events_df_selected_by_quarter_filtered_by_regions = data_selected_quarter.loc[
+            data_selected_quarter['region_code'].isin(region_list_value) & data_selected_quarter['user_id'].isin(
+                users_list_values)]
 
         ###### готовим данные для построения графика ########
-        meetings_fact_graph_data = events_df_selected_by_quarter_filtered_by_regions.groupby('close_date', as_index=False)["qty"].sum()
+        meetings_fact_graph_data = \
+        events_df_selected_by_quarter_filtered_by_regions.groupby('close_date', as_index=False)["qty"].sum()
 
         # quarter_dates_df = meeting_plan_fact.prepare_meetings_fact_data(quarter_selector, year_selector, region_selector_selected_list, meetings_data_selector)[3]
         df_meetings_fact_graph = pd.merge(quarter_dates_df, meetings_fact_graph_data, on='close_date', how='left')
@@ -309,7 +312,8 @@ def meeting_plan_fact(customer_plan_fact_table_filter, quarter_selector, year_se
         ############# Таблица с данными о выполнении плана сотрудниками ################
         # Имя пользователя. План. Факт. Статус выполнения плана
 
-        customer_plan_df = functions_file.plan_fact_df_prep(events_df_selected_by_quarter_ready, meetings_data_selector)[1]
+        customer_plan_df = \
+        functions_file.plan_fact_df_prep(events_df_selected_by_quarter_ready, meetings_data_selector)[1]
         events_fact_df = functions_file.plan_fact_df_prep(events_df_selected_by_quarter_ready, meetings_data_selector)[
             0]
 
@@ -415,7 +419,6 @@ def meeting_plan_fact(customer_plan_fact_table_filter, quarter_selector, year_se
         name='Завершенные встречи, кол-во',
     ))
 
-
     fig.add_hline(y=plan_value, line_width=3, line_color="red", annotation_text=annotation_text,
                   annotation_position="top left",
                   annotation_font_size=15,
@@ -423,17 +426,15 @@ def meeting_plan_fact(customer_plan_fact_table_filter, quarter_selector, year_se
 
                   )
 
-
     fig.update_layout(
         template=graph_template,
         xaxis={'range': [start_quarter_date, finish_quarter_date]},
         title='Завершено: {}<br><sup>c {} по {}</sup> '.format(fact_at_current_date, start_date, finish_date),
     )
 
-
-
-
     return region_list_value, region_list_options, users_list_values, users_list_options, fig, users_plan_fact_table, customer_plan_fact_table, alert_upload
+
+
 # обработчик кнопки выгрузки наружу файла "plan_template.xlsx"
 @app.callback(
     Output("download-meetings-xlsx", "data"),

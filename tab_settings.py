@@ -8,10 +8,6 @@ def tab_settings():
         # className='custom-tab',
         # selected_className='custom-tab--selected',
         children=[dbc.Row([
-            dbc.Alert("This is one column", color="primary",
-                      # dismissable=True,
-                      duration=4000,
-                      ),
 
             dbc.Col(
                 #width=3,
@@ -29,7 +25,7 @@ def tab_settings():
                         labelStyle=dict(display='block'),
                     ),
                     html.Hr(),
-                    dcc.Upload(dbc.Button("Загрузить встречи", color="secondary",
+                    dcc.Upload(dbc.Button("Загрузить файл", color="secondary",
                                           size="md",
                                           style={'marginBottom': '3px',
                                                  'marginTop': '3px',
@@ -39,10 +35,13 @@ def tab_settings():
                                ),
                     html.Div([
                         html.A("Выгрузить Excel шаблон встреч",
-                               style={'color': 'blue', 'text-decoration': 'none'},
+                               style={'color': 'blue',
+                                      # 'textDecoration': 'none'
+                                      },
                                id="btn_xlsx"),
                         dcc.Download(id="download-meetings-xlsx"),
                     ]),
+
                 ]
 
 

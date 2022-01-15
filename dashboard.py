@@ -123,8 +123,11 @@ app.layout = dbc.Container(
         Input('release_all_managers_button_tab_plan_fact', 'n_clicks'),
         Input('managers_selector_checklist_tab_plan_fact', 'value'),
         Input('meetings_data_selector', 'value'),
-        Input('upload_meetings', 'contents')],
-    [State('upload_meetings', 'filename')])
+        Input('upload_meetings', 'contents'),
+
+    ],
+    [State('upload_meetings', 'filename'),
+     ])
 
 def meeting_plan_fact(customer_plan_fact_table_filter, quarter_selector, year_selector, select_all_regions_button, release_all_regions_button, region_selector_selected_list, theme_selector, select_all_users_button, release_all_users_button, managers_from_checklist, meetings_data_selector, contents, filename):
     config_dict = initial_values.config_dict
@@ -153,6 +156,22 @@ def meeting_plan_fact(customer_plan_fact_table_filter, quarter_selector, year_se
                     duration=4000,
                     color="success",
                 ),
+            elif 'csv' in filename and 'events_' in filename:
+                rb_events_df = pd.read_csv(io.StringIO(decoded.decode('utf-8')))
+                rb_events_df.to_csv('data/rb_events_df.csv')
+                alert_upload = dbc.Alert(
+                    "Файл успешно загружен!",
+                    id="upload_success",
+                    duration=4000,
+                    color="success",)
+            elif 'csv' in filename and 'companies_' in filename:
+                rb_companies_df = pd.read_csv(io.StringIO(decoded.decode('utf-8')))
+                rb_companies_df.to_csv('data/rb_companies_df.csv')
+                alert_upload = dbc.Alert(
+                    "Файл успешно загружен!",
+                    id="upload_success",
+                    duration=4000,
+                    color="success",)
             else:
                 alert_upload = dbc.Alert(
                     "Формат загруженного файла - не '.xlsx'!",
@@ -173,6 +192,10 @@ def meeting_plan_fact(customer_plan_fact_table_filter, quarter_selector, year_se
                 color="danger",
             ),
     ##############################################################################
+
+
+
+
 
     first_day_of_selection = functions_file.quarter_days(quarter_selector, year_selector)[0]
     last_day_of_selection = functions_file.quarter_days(quarter_selector, year_selector)[1]

@@ -1,41 +1,75 @@
-user_id,user_code,name,position
-1,"Ababilov, Aleksandr","Ababilov, Aleksandr",Менеджер по продажам техники
-2,"Annenkov, Aleksey","Annenkov, Aleksey",Менеджер по продажам отдела техники
-3,"Butyrin, Sergey","Butyrin, Sergey",Менеджер по продажам техники
-4,"Chernov, Konstantin","Chernov, Konstantin",Менеджер по продажам техники
-5,"Churikov, Dmitry","Churikov, Dmitry",Руководитель отдела продаж техники
-6,"Dolmatov, Evgeny","Dolmatov, Evgeny",Менеджер по продажам техники
-7,"Fokin, Roman","Fokin, Roman",Директор филиала Тамбов
-8,"Fokin, Sergey","Fokin, Sergey",Руководитель отдела продаж техники
-9,"Gorbunov, Viktor","Gorbunov, Viktor",Менеджер по продажам отдела продаж техники
-10,"Gridin, Sergey","Gridin, Sergey",Менеджер по продажам отдела продаж техники
-11,"Ilin, Evgeny","Ilin, Evgeny",Менеджер по продажам техники (ВолТех)
-12,"Kalinin, Maksim","Kalinin, Maksim",Менеджер по продажам отдела продаж техники
-13,"Khabatilin, Denis","Khabatilin, Denis",Менеджер по продажам отдела продаж техники
-14,"Kolgan, Mikhail","Kolgan, Mikhail",Руководитель отдела продаж
-15,"Kupriyanov, Vasiliy","Kupriyanov, Vasiliy",Менеджер по продажам оборудования навигации и точного земледелия
-16,"Kutykov, Aleksandr","Kutykov, Aleksandr",Менеджер по продажам техники (ЯрАПЦ)
-17,"Kuznetsov, Vyacheslav","Kuznetsov, Vyacheslav",Field Expert Team
-18,"Lipatov, Aleksey","Lipatov, Aleksey",Менеджер по продажам техники (ЯрАПЦ)
-19,"Monogarov, Aleksey","Monogarov, Aleksey",Менеджер по продажам отдела продаж техники
-20,"Olkhovsky, Nikolay","Olkhovsky, Nikolay",Field Expert Team
-21,"Panfurov, Ivan","Panfurov, Ivan",Старший менеджер по продажам  отдела техники
-22,"Piven, Aleksey","Piven, Aleksey",Менеджер по продажам отдела продаж техники
-23,"Polyakov, Dmitry","Polyakov, Dmitry",Руководитель отдела продаж Б/У техники
-24,"Popov, Roman","Popov, Roman",Директор филиала Липецк
-25,"Pozhidaev, Dmitry","Pozhidaev, Dmitry",Директор филиала Воронеж
-26,"Proskuryakov, Yuri","Proskuryakov, Yuri",Директор филиала Пенза
-27,"Retunskiy, Maksim","Retunskiy, Maksim",Руководитель отдела продаж
-28,"Safonov, Aleksander","Safonov, Aleksander",Менеджер по работе с ключевыми клиентами
-29,"Semenov, Nikolay","Semenov, Nikolay",Старший менеджер по продажам  отдела техники
-30,"Sobachkin, Nikolay","Sobachkin, Nikolay",Field Expert Team
-31,"Solomaha, Pavel","Solomaha, Pavel",Менеджер по продажам Б/У техники
-32,"Syrovatskiy, Sergey","Syrovatskiy, Sergey",Менеджер по продажам отдела продаж техники
-33,"Vetrov, Mikhail","Vetrov, Mikhail",Менеджер по продажам отдела техники
-34,"Viktor, Bryankin","Viktor, Bryankin",Менеджер по продажам отдела техники
-35,"Zakharov, Viktor","Zakharov, Viktor",Руководитель отдела продаж
-36,"Zhigulskiy, Viktor","Zhigulskiy, Viktor",Менеджер по продажам отдела продаж техники
-37,"Zuev, Alexey","Zuev, Alexey",Менеджер по продажам техники
-38,"Tkachenko, Dmitry","Tkachenko, Dmitry",Менеджер по продажам техники
-39,"Rybakov, Valery","Rybakov, Valery",Менеджер по продажам техники
-40,"Mavrichev, Mikhail","Mavrichev, Mikhail",Менеджер по продажам техники
+,user_id,user_code,name,position
+0,1,"Dolmatov, Evgeny",Долматов Евгений, Менеджер по продажам техники
+1,2,"Retunskiy, Maksim",Ретунский Максим Михайлович, Руководитель отдела продаж
+2,3,"Kalinin, Maksim",Калинин Максим,менеджер
+3,4,"Popov, Roman",Попов Роман Валерьевич, Директор филиала Липецк
+4,5,"Safonov, Aleksander",Сафонов Александр, Менеджер по работе с ключевыми клиентами
+5,6,"Dolmatov, Evgeny, Popov, Roman",Долматов Евгений, Менеджер по продажам техники; Попов Роман Валерьевич
+6,7,"Zuev, Alexey",Зуев Алексей, Менеджер по продажам техники
+7,8,"Vetrov, Mikhail",Ветров Михаил, Менеджер по продажам отдела техники
+8,9,"Polyakov, Dmitry",Поляков Дмитрий Витальевич, Руководитель отдела продаж Б/У техники
+9,10,"Fokin, Sergey",Фокин Сергей, Руководитель отдела продаж техники
+10,11,"Annenkov, Aleksey",Анненков Алексей, Менеджер по продажам отдела техники
+11,12,"Viktor, Bryankin",Брянкин Виктор, Менеджер по продажам отдела техники
+12,13,"Churikov, Dmitry",Чуриков Дмитрий, Руководитель отдела продаж техники
+13,14,"Gridin, Sergey",Гридин Сергей, Менеджер по продажам отдела продаж техники
+14,15,"Syrovatskiy, Sergey",Сыроватский Сергей, Менеджер по продажам отдела продаж техники
+15,16,"Pozhidaev, Dmitry",Пожидаев Дмитрий, Директор филиала Воронеж
+16,17,"Zhigulskiy, Viktor",Жигульский Виктор, Менеджер по продажам отдела продаж техники
+17,18,"Zakharov, Viktor",Захаров Виктор, Руководитель отдела продаж
+18,19,"Semenov, Nikolay",Семёнов Николай, Старший менеджер по продажам  отдела техники
+19,20,"Panfurov, Ivan",Панфуров Иван, Старший менеджер по продажам  отдела техники
+20,21,"Fokin, Roman",Фокин Роман, Директор филиала Тамбов
+21,22,"Butyrin, Sergey",Бутырин Сергей, Менеджер по продажам техники
+22,23,"Proskuryakov, Yuri",Проскуряков Юрий Николаевич, Директор филиала Пенза
+23,24,"Ababilov, Aleksandr",Абабилов Александр, Менеджер по продажам техники
+24,25,"Kolgan, Mikhail",Колган Михаил, Руководитель отдела продаж
+25,26,"Pulin, Vladimir",Пулин Владимир, Менеджер по продажам отдела продаж техники
+26,27,"Solomaha, Pavel",Соломаха Павел, Менеджер по продажам Б/У техники
+27,28,"Pozhidaev, Dmitry, Pulin, Vladimir",Пожидаев Дмитрий, Директор филиала Воронеж; Пулин Владимир
+28,29,"Gorbunov, Viktor",Горбунов Виктор, Менеджер по продажам отдела продаж техники
+29,30,"Ilin, Evgeny",Ильин Евгений, Менеджер по продажам техники (ВолТех)
+30,31,"Tkachenko, Dmitry",Ткаченко Дмитрий, Директор филиала Рязань
+31,32,,Вакансия, Региональный директор (Вологда
+32,33,"Rybakov, Valery",Рыбаков Валерий Всеволодович, Региональный директор СПб
+33,34,Г. Чергештов,Чергештов Гурген , Генеральный директор
+34,35,"Zhigulskiy, Viktor, Gridin, Sergey",Жигульский Виктор, Менеджер по продажам отдела продаж техники; Гридин Сергей
+35,36,"Lipatov, Aleksey",Липатов Алексей, Менеджер по продажам техники (ЯрАПЦ)
+36,37,"Mavrichev, Mikhail",Маврычев Михаил, Руководитель по продажам техники (ЯрАПЦ)
+37,38,"Kutykov, Aleksandr",Кутыков Александр, Менеджер по продажам техники (ЯрАПЦ)
+38,39,"Dolmatov, Evgeny, Solomaha, Pavel",Долматов Евгений, Менеджер по продажам техники; Соломаха Павел
+39,39,Татуйко Даниил,Татуйко Даниил,Менеджер автоматизации процессов продаж
+40,40,"Khabatilin, Denis","Khabatilin, Denis",Менеджер по продажам отдела продаж техники
+41,41,"Kuznetsov, Vyacheslav","Kuznetsov, Vyacheslav",Field Expert Team
+42,42,"Sobachkin, Nikolay","Sobachkin, Nikolay",Field Expert Team
+43,43,"Olkhovsky, Nikolay","Olkhovsky, Nikolay",Field Expert Team
+44,44,"Kupriyanov, Vasiliy","Kupriyanov, Vasiliy",Менеджер по продажам оборудования навигации и точного земледелия
+45,45,"Piven, Aleksey","Piven, Aleksey",Менеджер по продажам отдела продаж техники
+46,46,"Monogarov, Aleksey","Monogarov, Aleksey",Менеджер по продажам отдела продаж техники
+47,47,"Chernov, Konstantin","Chernov, Konstantin",Менеджер по продажам техники
+48,48,"Popov, Sergey","Popov, Sergey",Руководитель отдела продаж техники
+49,49,"Pankrashkin, Yuriy","Pankrashkin, Yuriy",Менеджер по продажам техники
+50,50,"Karabanov, Alexey","Karabanov, Alexey",Менеджер по развитию продаж оборудования навигации и точного земледелия
+51,51,"Frolov, Ilya","Frolov, Ilya",Менеджер по продажам оборудования навигации и точного земледелия
+52,52,"Dmitriev, Pavel","Dmitriev, Pavel",Руководитель по развитию продаж техники
+53,53,"Bogachenko, Marina","Bogachenko, Marina",Менеджер по продажам отдела продаж техники
+54,54,"Kazancev, Vladimir","Kazancev, Vladimir",Менеджер по продажам отдела продаж техники
+55,55,"Salnikov, Anton","Salnikov, Anton",Менеджер по продажам техники
+56,56,"Semashkin, Aleksandr","Semashkin, Aleksandr",Менеджер по продажам отдела продаж техники
+57,57,"Glukhov, Sergey","Glukhov, Sergey",Менеджер по продажам отдела продаж техники
+58,58,"Maksimov, Maksim","Maksimov, Maksim",Менеджер по продажам отдела техники
+59,59,"Alexeev, Daniil","Alexeev, Daniil",Менеджер по продажам отдела техники
+60,60,"Vasilchenko, Aleksey","Vasilchenko, Aleksey",Менеджер по продажам отдела продаж техники
+61,61,"Kaplunov, Viktor","Kaplunov, Viktor",Менеджер по продажам отдела продаж техники
+62,62,"Trubchaninov, Viktor","Trubchaninov, Viktor",Менеджер по продажам отдела продаж техники
+63,63,"Blinkov, Igor","Blinkov, Igor",Менеджер по продажам отдела техники
+64,64,"Papusha, Roman","Papusha, Roman",Менеджер по продажам отдела продаж техники
+65,65,"Chebatarev, Vitaly","Chebatarev, Vitaly",Директор по работе с ключевыми клиентами
+66,66,"Volkovoy, Yuriy","Volkovoy, Yuriy",Воронеж - Руководитель отдела продаж техники
+67,67,"Chernetskiy, Sergey","Chernetskiy, Sergey",Менеджер по продажам отдела техники
+68,68,"Kanaev, Vitaly","Kanaev, Vitaly",Рязань - Менеджер по продажам техники
+69,69,"Shabalin, Viktor","Shabalin, Viktor",Воронеж - Старший менеджер по продажам
+70,70,"Ivanov, Valentin","Ivanov, Valentin",Менеджер по продажам техники (ВолТех)
+71,71,"Marilov, Ivan","Marilov, Ivan",Менеджер по продажам техники
+72,72,"Shepelev, Mikhail","Shepelev, Mikhail",Директор филиала Орел
+73,73,"Dorensky, Andrey","Dorensky, Andrey",Курск - Руководитель отдела продаж

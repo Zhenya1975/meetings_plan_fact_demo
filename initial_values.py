@@ -19,7 +19,7 @@ def initial_values_init(mode):
         segments_visit_plan = pd.read_csv('Data/segments_visits_plans_demo.csv')
     else:
         events_df = pd.read_csv('Data/events.csv')
-        customer_df = pd.read_csv('Data/customers.csv')
+        customer_df = pd.read_csv('Data/customers_.csv')
         users_df = pd.read_csv('Data/users.csv')
         segments_visit_plan = pd.read_csv('Data/segments_visits_plans_demo.csv')
     return events_df, customer_df, users_df, segments_visit_plan
